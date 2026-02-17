@@ -8,7 +8,7 @@ param(
 )
 
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$filterPath = Join-Path $scriptRoot "filters\docx_to_compact.lua"
+$filterPath = Join-Path $scriptRoot "..\filters\docx_to_compact.lua"
 $defaultInputExtension = ".docx"
 $defaultOutputExtension = ".md"
 
