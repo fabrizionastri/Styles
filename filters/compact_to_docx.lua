@@ -253,7 +253,7 @@ local function convert_blocks(blocks, state, ctx)
       else
         local text = trim(utils.stringify(cleaned))
         if not state.in_appendix then
-          local article2 = text:match("^%d+%.%d+%.%s+(.+)$")
+          local article2 = text:match("^%d+%.%d+%.?%s+(.+)$")
           if article2 then
             append_blocks(out, styled_div("Article 2", { pandoc.Para(inlines_from_markdown(article2)) }))
           else
@@ -318,7 +318,6 @@ local function convert_blocks(blocks, state, ctx)
       local level = (ctx.bullet_depth or 0) + 1
       local bullet_style = BULLET_STYLE_BY_LEVEL[level] or "List 3"
       local new_items = pandoc.List:new()
-
       for _, item in ipairs(block.content) do
         local converted_item = convert_blocks(item, state, {
           bullet_depth = level,

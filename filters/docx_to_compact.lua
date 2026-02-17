@@ -173,6 +173,115 @@ local function append_blocks(dst, src)
   end
 end
 
+local function tighten_list_item_blocks(item_blocks)
+  local out = pandoc.List:new()
+  for i, b in ipairs(item_blocks) do
+    if i == 1 and b.t == "Para" then
+      out:insert(pandoc.Plain(b.content))
+    else
+      out:insert(b)
+    end
+  end
+  return out
+end
+
+local function inlines_to_markdown_line(inlines)
+  local tmp_doc = pandoc.Pandoc({ pandoc.Plain(inlines) }, pandoc.Meta({}))
+  local txt = pandoc.write(tmp_doc, "markdown")
+  txt = txt:gsub("\r\n", "\n")
+  txt = trim(txt:gsub("\n+$", ""))
+  return txt
+end
+
+local function split_lines(text)
+  local lines = {}
+  local normalized = (text or ""):gsub("\r\n", "\n")
+  if normalized == "" then
+    return lines
+  end
+  for line in (normalized .. "\n"):gmatch("(.-)\n") do
+    lines[#lines + 1] = line
+  end
+  return lines
+end
+
+local function render_bullet_items(items, level)
+  local lines = {}
+  local indent = string.rep(" ", (level - 1) * 2)
+
+  for _, item in ipairs(items) do
+    local first = item[1]
+    if first and (first.t == "Plain" or first.t == "Para") then
+      local text = inlines_to_markdown_line(first.content)
+      lines[#lines + 1] = indent .. "- " .. text
+    end
+
+    for j = 2, #item do
+      local b = item[j]
+      if b.t == "BulletList" then
+        local nested = render_bullet_items(b.content, level + 1)
+        for _, line in ipairs(nested) do
+          lines[#lines + 1] = line
+        end
+      elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
+        local prefix = string.rep(" ", level * 2)
+        for _, line in ipairs(split_lines(b.text or b.c or "")) do
+          lines[#lines + 1] = prefix .. line
+        end
+      end
+    end
+  end
+
+  return lines
+end
+
+local function ordered_marker(list_style, n)
+  if list_style == "LowerAlpha" then
+    return to_alpha(n, false) .. ")"
+  end
+  if list_style == "LowerRoman" then
+    return to_roman(n, false) .. "."
+  end
+  if list_style == "UpperRoman" then
+    return to_roman(n, true) .. "."
+  end
+  if list_style == "UpperAlpha" then
+    return to_alpha(n, true) .. "."
+  end
+  return tostring(n) .. "."
+end
+
+local function render_ordered_items(items, level, list_style, start)
+  local lines = {}
+  local indent = string.rep(" ", (level - 1) * 2)
+
+  for i, item in ipairs(items) do
+    local n = (start or 1) + (i - 1)
+    local first = item[1]
+    if first and (first.t == "Plain" or first.t == "Para") then
+      local text = inlines_to_markdown_line(first.content)
+      lines[#lines + 1] = indent .. ordered_marker(list_style, n) .. " " .. text
+    end
+
+    for j = 2, #item do
+      local b = item[j]
+      if b.t == "OrderedList" then
+        local nested = render_ordered_items(b.content, level + 1, enum_name(b.style), b.start or 1)
+        for _, line in ipairs(nested) do
+          lines[#lines + 1] = line
+        end
+      elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
+        local prefix = string.rep(" ", level * 2)
+        for _, line in ipairs(split_lines(b.text or b.c or "")) do
+          lines[#lines + 1] = prefix .. line
+        end
+      end
+    end
+  end
+
+  return lines
+end
+
 local function convert_blocks(blocks, state)
   local function convert_div(div)
     local style = get_custom_style(div.attr)
@@ -247,6 +356,11 @@ local function convert_blocks(blocks, state)
 
         if style == "Appendix 1" then
           state.in_appendix = true
+          state.current_article1 = nil
+        elseif style == "Section" then
+          state.current_article1 = nil
+        elseif style == "Article 1" then
+          state.current_article1 = n
         end
 
         local remainder = pandoc.List:new()
@@ -263,17 +377,82 @@ local function convert_blocks(blocks, state)
       return out
     end
 
+    local all_article2_items = true
+    for _, item in ipairs(ol.content) do
+      local first = item[1]
+      if not first or first.t ~= "Div" then
+        all_article2_items = false
+        break
+      end
+      local style = get_custom_style(first.attr)
+      if style ~= "Article 2" then
+        all_article2_items = false
+        break
+      end
+    end
+
+    if all_article2_items and not state.in_appendix then
+      local out = pandoc.List:new()
+      local article1_n = state.current_article1 or 1
+
+      for i, item in ipairs(ol.content) do
+        local first = item[1]
+        local n = start + (i - 1)
+        local first_blocks = convert_blocks(first.content, state)
+        local body_inlines = extract_primary_inlines(first_blocks)
+
+        local prefix = tostring(article1_n) .. "." .. tostring(n) .. "."
+        local prefixed = inlines_from_markdown(prefix)
+        if #body_inlines > 0 then
+          prefixed:insert(pandoc.Space())
+        end
+        for _, inl in ipairs(body_inlines) do
+          prefixed:insert(inl)
+        end
+        out:insert(pandoc.Plain(prefixed))
+
+        local remainder = pandoc.List:new()
+        if #first_blocks > 1 then
+          for j = 2, #first_blocks do
+            remainder:insert(first_blocks[j])
+          end
+        end
+        for j = 2, #item do
+          remainder:insert(item[j])
+        end
+        append_blocks(out, convert_blocks(remainder, state))
+      end
+
+      return out
+    end
+
     local new_items = pandoc.List:new()
     for _, item in ipairs(ol.content) do
-      new_items:insert(convert_blocks(item, state))
+      local converted = convert_blocks(item, state)
+      new_items:insert(tighten_list_item_blocks(converted))
     end
+
+    local list_style = enum_name(ol.style)
+    if list_style == "LowerAlpha" or list_style == "LowerRoman" then
+      local lines = render_ordered_items(new_items, 1, list_style, start)
+      if #lines > 0 then
+        return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
+      end
+    end
+
     return pandoc.OrderedList(new_items, attrs)
   end
 
   local function convert_bullet_list(bl)
     local new_items = pandoc.List:new()
     for _, item in ipairs(bl.content) do
-      new_items:insert(convert_blocks(item, state))
+      local converted = convert_blocks(item, state)
+      new_items:insert(tighten_list_item_blocks(converted))
+    end
+
+    local lines = render_bullet_items(new_items, 1)
+    if #lines > 0 then
+      return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
     end
     return pandoc.BulletList(new_items)
   end

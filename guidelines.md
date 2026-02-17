@@ -13,7 +13,8 @@ Goal: support two-way authoring of contracts in both MS Word and Markdown, with 
 
 - Standard document structure uses native Markdown:
     - `#`..`######` for heading hierarchy
-    - / `1.` for lists
+    - `-` for bullet lists
+    - `1.` / `a)` / `i.` for ordered lists
     - bold/italic/etc. for inline emphasis
 - Non-standard Word styles use Markdown attributes with class aliases:
     - Example: `Comments {.Comments}`
@@ -21,6 +22,18 @@ Goal: support two-way authoring of contracts in both MS Word and Markdown, with 
     - Pandoc class names cannot contain spaces.
     - So Word styles with spaces need alias mapping (e.g. `.Heading-2` -> `"Heading 2"` in Lua).
 - Direct form `{custom-style="Heading 2"}` is still valid, but less human-friendly.
+
+**Canonical Markdown Serialization Rules**
+
+- Bullet list indentation is normalized as:
+    - `- <text>` for `List`
+    - `  - <text>` for `List 2`
+    - `    - <text>` for `List 3`
+- `Article 2` must be serialized as explicit `1.1.` style text in Markdown (e.g. `1.1. <text>`), not as a plain `1.` list marker.
+- Avoid loose list formatting:
+    - no extra blank lines before list items
+    - no extra blank lines before `a)`/`i.` subclauses in Articles/Appendices
+    - no extra blank lines before `Article 2` lines
 
 **Implemented Components**
 
@@ -43,7 +56,7 @@ pandoc -f docx+styles -t markdown --lua-filter=filters/docx_to_compact.lua contr
 - MD -> DOCX (with style restoration):
 
 ```powershell
-pandoc -f markdown -t docx --reference-doc=contract.slim.docx --lua-filter=filters/compact_to_docx.lua contract.compact.md -o contract.out.docx
+pandoc -f markdown+fancy_lists+lists_without_preceding_blankline -t docx --reference-doc=contract.slim.docx --lua-filter=filters/compact_to_docx.lua contract.compact.md -o contract.out.docx
 ```
 
 - Optional template cleanup:
