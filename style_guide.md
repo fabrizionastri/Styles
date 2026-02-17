@@ -62,6 +62,8 @@ A secondary sub-heading (unnumbered).
 |----------------|------------------------------------------------|
 | Font           | Open Sans, 11 pt, bold                         |
 | Alignment      | Left                                           |
+| Spacing before | 18 pt                                          |
+| Spacing after  | 6 pt                                           |
 | TOC level      | 2                                               |
 | Outline level  | 2                                              |
 | Markdown       | `### <text>`                                   |
@@ -74,6 +76,8 @@ A minor sub-heading (unnumbered).
 |----------------|------------------------------------------------|
 | Font           | Open Sans, 10 pt, underline                    |
 | Alignment      | Left                                           |
+| Spacing before | 3 pt                                           |
+| Spacing after  | 3 pt                                           |
 | Markdown       | `#### <text>`                                  |
 
 ---
@@ -456,15 +460,124 @@ column widths.
 
 ## 11. Footer
 
+Defined in the reference template only — not represented in Markdown.
+
 | Property       | Value                                          |
 |----------------|------------------------------------------------|
 | Font           | Open Sans, 8 pt                                |
+| Alignment      | Left                                           |
 | Tabs           | Right-aligned at page width                    |
+| Left indent    | −0.5 cm                                        |
+| Right indent   | −0.5 cm                                        |
 | Content        | `{FILENAME}` [tab] `page {PAGE} on {NUMPAGES}`|
+| Markdown       | n/a (template only)                            |
 
 ---
 
-## 12. TOC (Table of Contents)
+## 12. Notes (Footnotes / Endnotes)
+
+Notes allow you to add explanations, definitions, or references without
+interrupting the main text. In the Word output, they appear either at the
+bottom of each page (footnotes) or at the end of the document (endnotes),
+depending on how the Word template is configured. The Markdown syntax is
+the same in both cases.
+
+### 12.1 How to write notes in Markdown
+
+A note has two parts: a **reference** in the body text, and the **note
+content** elsewhere in the file.
+
+**Step 1 — Place a reference in the body text.** Write `[^label]` wherever
+you want the superscript number to appear. The label can be any short name
+or number — it is only used to link the reference to the content.
+
+```
+The Contributor must declare all conflicts of interest[^conflicts]
+before signing the Agreement.
+```
+
+**Step 2 — Write the note content.** Anywhere in the file (typically at the
+end, but it can be placed right after the paragraph), write the label
+followed by a colon and the text:
+
+```
+[^conflicts]: A conflict of interest includes any situation where the
+Contributor has a direct or indirect financial stake in the outcome.
+```
+
+**Complete example:**
+
+```markdown
+## Section I. Definitions
+
+### Article 1. Purpose
+
+This Agreement governs the provision of Services[^services] by the
+Provider[^provider] to the Client.
+
+The Provider must maintain professional liability insurance[^insurance]
+at all times during the term of this Agreement.
+
+[^services]: "Services" means the consulting and advisory services
+described in Appendix 1.
+
+[^provider]: "Provider" means the natural or legal person identified
+in the Special Conditions.
+
+[^insurance]: Professional liability insurance with a minimum coverage
+of EUR 1,000,000 per claim.
+```
+
+In the Word output, this produces three notes numbered 1, 2, 3 with
+superscript reference numbers in the body text.
+
+### 12.2 Labelling and automatic numbering
+
+You can use any label you like — descriptive names (`[^conflicts]`,
+`[^insurance]`) or plain numbers (`[^1]`, `[^2]`). The labels are never
+shown in the Word output. Pandoc automatically assigns sequential numbers
+(1, 2, 3...) based on the order in which the references appear in the
+body text, regardless of:
+
+- what labels you used,
+- what order the note definitions appear in the file,
+- whether you used numbers or names as labels.
+
+This means you never need to renumber anything. If you insert a new note
+reference between two existing ones, Pandoc automatically renumbers
+everything in the output. For example:
+
+```markdown
+First point[^a] and second point[^b].     ← produces notes 1 and 2
+
+First point[^a], new point[^c], and second point[^b].  ← produces 1, 2, 3
+```
+
+**Recommendation:** Use descriptive labels (e.g. `[^defined-terms]`,
+`[^liability-cap]`) rather than numbers. This makes the Markdown source
+easier to read and avoids any confusion when inserting new notes.
+
+### 12.3 Footnotes vs endnotes
+
+Whether notes appear at the bottom of each page (footnotes) or at the end
+of the document (endnotes) is controlled by the Word template, not by the
+Markdown source. The same `[^label]` syntax produces footnotes or endnotes
+depending on the template setting. To switch between the two, change the
+setting in the Word reference template (Layout > Footnotes > End of
+document) — no change to the Markdown files is needed.
+
+### 12.4 Formatting in Word
+
+| Property             | Footnotes                | Endnotes                 |
+|----------------------|--------------------------|--------------------------|
+| Font                 | Open Sans, 8 pt          | Open Sans, 10 pt         |
+| Alignment            | Justified                | Justified                |
+| Reference mark       | Superscript number       | Superscript number       |
+| Markdown syntax      | `[^label]` / `[^label]:` | `[^label]` / `[^label]:` |
+
+---
+
+## 13. TOC (Table of Contents)
 
 The TOC should include:
 - Section headings (TOC level 1)
@@ -476,7 +589,7 @@ The TOC should include:
 
 ---
 
-## 13. Inline Formatting
+## 14. Inline Formatting
 
 | Markdown            | Word Rendering                          |
 |----------------------|-----------------------------------------|
@@ -490,7 +603,7 @@ The TOC should include:
 
 ---
 
-## 14. Character Styles
+## 15. Character Styles
 
 These are automatically maintained by Word and do not need explicit handling in
 the Lua filters:
