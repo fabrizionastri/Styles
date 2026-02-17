@@ -56,7 +56,7 @@ pandoc -f docx+styles -t markdown --lua-filter=filters/docx_to_compact.lua contr
 - MD -> DOCX (with style restoration):
 
 ```powershell
-pandoc -f markdown+fancy_lists+lists_without_preceding_blankline -t docx --reference-doc=contract.slim.docx --lua-filter=filters/compact_to_docx.lua contract.compact.md -o contract.out.docx
+pandoc -f markdown+fancy_lists+lists_without_preceding_blankline -t docx --no-highlight --reference-doc=contract.slim.docx --lua-filter=filters/compact_to_docx.lua contract.compact.md -o contract.out.docx
 ```
 
 - Optional template cleanup:

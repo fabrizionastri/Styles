@@ -14,6 +14,7 @@ Normal
 
 - List
 - List 2
+- List 3
 
 Normal with a footnote[^1]
 
@@ -24,6 +25,8 @@ Normal with a footnote[^1]
 1.1. Article 2
 a) Article 3
   i. Article 4
+
+## Table of contents
 
 # Appendix 1. Appendix 1
 
