@@ -205,11 +205,32 @@ local function split_lines(text)
   return lines
 end
 
-local function render_bullet_items(items, level)
-  local lines = {}
-  local indent = string.rep(" ", (level - 1) * 2)
+local function bullet_level_from_style(style_name)
+  if style_name == "List" then
+    return 1
+  end
+  if style_name == "List 2" then
+    return 2
+  end
+  if style_name == "List 3" then
+    return 3
+  end
+  return nil
+end
 
-  for _, item in ipairs(items) do
+local function render_bullet_items(items, level, style_hints)
+  local lines = {}
+
+  for i, item in ipairs(items) do
+    local item_level = level
+    if style_hints and style_hints[i] then
+      local hinted = bullet_level_from_style(style_hints[i])
+      if hinted then
+        item_level = hinted
+      end
+    end
+    local indent = string.rep(" ", (item_level - 1) * 2)
+
     local first = item[1]
     if first and (first.t == "Plain" or first.t == "Para") then
       local text = inlines_to_markdown_line(first.content)
@@ -219,12 +240,12 @@ local function render_bullet_items(items, level)
     for j = 2, #item do
       local b = item[j]
       if b.t == "BulletList" then
-        local nested = render_bullet_items(b.content, level + 1)
+        local nested = render_bullet_items(b.content, item_level + 1, nil)
         for _, line in ipairs(nested) do
           lines[#lines + 1] = line
         end
       elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
-        local prefix = string.rep(" ", level * 2)
+        local prefix = string.rep(" ", item_level * 2)
         for _, line in ipairs(split_lines(b.text or b.c or "")) do
           lines[#lines + 1] = prefix .. line
         end
@@ -445,12 +466,21 @@ local function convert_blocks(blocks, state)
 
   local function convert_bullet_list(bl)
     local new_items = pandoc.List:new()
+    local style_hints = {}
+
     for _, item in ipairs(bl.content) do
+      local style_hint = nil
+      local first = item[1]
+      if first and first.t == "Div" then
+        style_hint = get_custom_style(first.attr)
+      end
+      style_hints[#style_hints + 1] = style_hint
+
       local converted = convert_blocks(item, state)
       new_items:insert(tighten_list_item_blocks(converted))
     end
 
-    local lines = render_bullet_items(new_items, 1)
+    local lines = render_bullet_items(new_items, 1, style_hints)
     if #lines > 0 then
       return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
     end

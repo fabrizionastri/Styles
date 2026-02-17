@@ -317,16 +317,16 @@ local function convert_blocks(blocks, state, ctx)
     elseif block.t == "BulletList" then
       local level = (ctx.bullet_depth or 0) + 1
       local bullet_style = BULLET_STYLE_BY_LEVEL[level] or "List 3"
-      local new_items = pandoc.List:new()
+      local flattened = pandoc.List:new()
       for _, item in ipairs(block.content) do
         local converted_item = convert_blocks(item, state, {
           bullet_depth = level,
         })
         converted_item = wrap_first_para_like(converted_item, bullet_style)
-        new_items:insert(converted_item)
+        append_blocks(flattened, converted_item)
       end
 
-      out:insert(pandoc.BulletList(new_items))
+      append_blocks(out, flattened)
 
     else
       out:insert(block)
