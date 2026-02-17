@@ -4,7 +4,8 @@ Goal: keep a reliable DOCX <-> Markdown contract workflow, while handling legacy
 **Current Toolchain**
 - `d2m.ps1`: DOCX -> Markdown (uses `filters/docx_to_compact.lua`)
 - `m2d.ps1`: Markdown -> DOCX (uses `filters/compact_to_docx.lua` and `styles.docx`)
-- `commands.ps1`: loads `d2m` and `m2d` helper commands in PowerShell
+- `ld2d.ps1`: Legacy DOCX -> remapped DOCX (uses `remap.lua`, `styles.docx`, `--no-highlight`)
+- `commands.ps1`: loads `d2m`, `m2d`, and `ld2d` helper commands in PowerShell
 - `install_commands.ps1`: adds commands loader to your PowerShell profile
 - `remap_legacy_contracts.py`: remaps legacy Word heading styles before conversion
 
@@ -52,11 +53,20 @@ powershell -ExecutionPolicy Bypass -File .\m2d.ps1 "SaaS contract.md"
 powershell -ExecutionPolicy Bypass -File .\m2d.ps1 "SaaS contract.md" "plop.docx"
 ```
 
+Legacy DOCX -> remapped DOCX:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\ld2d.ps1 "legacy.docx"
+powershell -ExecutionPolicy Bypass -File .\ld2d.ps1 "legacy.docx" "plop"
+```
+
 Extension inference:
 - `d2m` input defaults to `.docx`, output defaults to `.md`
 - `m2d` input defaults to `.md`, output defaults to `.docx`
+- `ld2d` input defaults to `.docx`, output defaults to `_remapped.docx`
 - Example: `d2m "style" "plop"` -> `style.docx` to `plop.md`
 - Example: `m2d "plop" "zut"` -> `plop.md` to `zut.docx`
+- Example: `ld2d "legacy"` -> `legacy_remapped.docx`
+- Example: `ld2d "legacy.docx" "plop"` -> `plop.docx`
 
 **Optional Shell Helpers**
 Load functions in the current session:
@@ -64,6 +74,7 @@ Load functions in the current session:
 . .\commands.ps1
 d2m "SaaS contract.docx"
 m2d "SaaS contract.md"
+ld2d "legacy.docx"
 ```
 
 Install for every new PowerShell session:
@@ -87,5 +98,5 @@ m2d "legacy_contract_remapped.md"
 ```
 
 **Notes**
-- The legacy mapping is now handled in Python (`python-docx`), not in Lua filters.
+- Legacy mapping can be handled either by Python (`remap_legacy_contracts.py`) or by Pandoc Lua remap (`ld2d.ps1` using `remap.lua`).
 - Keep `styles.docx` aligned with your target Word style definitions, since it is used as reference during `m2d`.
