@@ -1,3 +1,5 @@
 _archives/
 _tmp*/
 _tmp*
+_docs
+.venv
