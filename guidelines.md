@@ -92,7 +92,19 @@ powershell -ExecutionPolicy Bypass -File .\m2d.ps1 "SaaS contract.md" "plop.docx
         - `d2m "style" "plop"` -> reads `style.docx`, writes `plop.md`
         - `m2d "plop" "zut"` -> reads `plop.md`, writes `zut.docx`
 
-- Optional shell commands `d2m` / `m2d` for the current PowerShell session:
+- Independent legacy mapping tool (separate from standard `d2m`):
+    - Use `legacy_d2m.ps1` to map old Heading styles before compact conversion.
+    - Mapping applied by `filters/legacy_heading_map.lua`:
+        - `Heading 1` -> `Article 1`
+        - `Heading 2` -> `Article 2`
+        - `Heading 3` -> `Article 3`
+        - `Heading 4` -> `Article 4`
+        - `Heading 6` -> `Heading 4`
+    - Examples:
+        - `powershell -ExecutionPolicy Bypass -File .\legacy_d2m.ps1 "legacy-contract.docx"`
+        - `powershell -ExecutionPolicy Bypass -File .\legacy_d2m.ps1 "legacy-contract.docx" "legacy-contract.md"`
+
+- Optional shell commands `d2m` / `m2d` / `ld2m` for the current PowerShell session:
 
 ```powershell
 . .\commands.ps1
@@ -100,9 +112,11 @@ d2m "SaaS contract.docx"
 d2m "SaaS contract.docx" "plop.md"
 m2d "SaaS contract.md"
 m2d "SaaS contract.md" "plop.docx"
+ld2m "legacy-contract.docx"
+ld2m "legacy-contract.docx" "legacy-contract.md"
 ```
 
-- Optional persistent setup (load `d2m` / `m2d` in every new PowerShell session):
+- Optional persistent setup (load `d2m` / `m2d` / `ld2m` in every new PowerShell session):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\install_commands.ps1
