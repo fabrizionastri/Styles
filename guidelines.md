@@ -72,6 +72,34 @@ pandoc contract.compact.md -c contract.css -o contract.html
 pandoc contract.compact.md -c contract.css -o contract.pdf
 ```
 
+**Convenience Commands**
+
+- PowerShell script wrappers (work with 1 or 2 parameters):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\d2m.ps1 "SaaS contract.docx"
+powershell -ExecutionPolicy Bypass -File .\d2m.ps1 "SaaS contract.docx" "plop.md"
+
+powershell -ExecutionPolicy Bypass -File .\m2d.ps1 "SaaS contract.md"
+powershell -ExecutionPolicy Bypass -File .\m2d.ps1 "SaaS contract.md" "plop.docx"
+```
+
+- Optional shell commands `d2m` / `m2d` for the current PowerShell session:
+
+```powershell
+. .\commands.ps1
+d2m "SaaS contract.docx"
+d2m "SaaS contract.docx" "plop.md"
+m2d "SaaS contract.md"
+m2d "SaaS contract.md" "plop.docx"
+```
+
+- Optional persistent setup (load `d2m` / `m2d` in every new PowerShell session):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install_commands.ps1
+```
+
 **Practical Outcome**
 
 - This gives a scalable MD-first contract workflow with round-trip style preservation for legal templates.

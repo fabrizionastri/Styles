@@ -1,1 +1,15 @@
-pandoc -f markdown+fancy_lists+lists_without_preceding_blankline -t docx --no-highlight --reference-doc=styles.docx --lua-filter=filters/compact_to_docx.lua example.md -o example.docx
+[CmdletBinding()]
+param(
+  [Parameter(Mandatory = $true, Position = 0)]
+  [string]$InputFile,
+
+  [Parameter(Position = 1)]
+  [string]$OutputFile
+)
+
+$scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+& (Join-Path $scriptRoot "m2d.ps1") $InputFile $OutputFile
+
+if ($LASTEXITCODE -ne 0) {
+  exit $LASTEXITCODE
+}
