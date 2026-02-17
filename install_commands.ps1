@@ -29,4 +29,4 @@ if ($content -contains $line) {
 
 Add-Content -LiteralPath $profilePath -Value ""
 Add-Content -LiteralPath $profilePath -Value $line
-Write-Output "Added d2m/m2d/ld2m loader to profile: $profilePath"
+Write-Output "Added d2m/m2d loader to profile: $profilePath"

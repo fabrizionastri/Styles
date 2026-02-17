@@ -1,134 +1,91 @@
 **Developer Summary**
-Goal: support two-way authoring of contracts in both MS Word and Markdown, with style fidelity preserved and a Markdown-first workflow for scale and AI-assisted drafting/review.
+Goal: keep a reliable DOCX <-> Markdown contract workflow, while handling legacy Word documents by remapping styles in DOCX first.
 
-**What We Agreed**
+**Current Toolchain**
+- `d2m.ps1`: DOCX -> Markdown (uses `filters/docx_to_compact.lua`)
+- `m2d.ps1`: Markdown -> DOCX (uses `filters/compact_to_docx.lua` and `styles.docx`)
+- `commands.ps1`: loads `d2m` and `m2d` helper commands in PowerShell
+- `install_commands.ps1`: adds commands loader to your PowerShell profile
+- `remap_legacy_contracts.py`: remaps legacy Word heading styles before conversion
 
-- Markdown should be the primary editable format for contract templates.
-- Word remains a first-class source/target format (draft in Word or MD, convert both ways).
-- Use Pandoc + Lua filters as the conversion backbone.
-- Prefer concise attribute-style authoring in Markdown for non-standard styles (not verbose `:::` blocks).
-- Use a shared CSS layer for MD -> HTML/PDF output and VS Code WYSIWYG-like preview.
+**Legacy Remap (DOCX First)**
+Use the Python script before `d2m` when a legacy contract does not follow current styles.
 
-**Style Strategy**
+Style mapping implemented in `remap_legacy_contracts.py`:
+- `Title` -> `Heading 1`
+- `Heading 1` -> `Article 1`
+- `Heading 2` -> `Article 2`
+- `Heading 3` -> `Article 3`
+- `Heading 4` -> `Article 4`
+- `Heading 6` -> `Heading 4`
 
-- Standard document structure uses native Markdown:
-    - `#`..`######` for heading hierarchy
-    - `-` for bullet lists
-    - `1.` / `a)` / `i.` for ordered lists
-    - bold/italic/etc. for inline emphasis
-- Non-standard Word styles use Markdown attributes with class aliases:
-    - Example: `Comments {.Comments}`
-- Important syntax constraint:
-    - Pandoc class names cannot contain spaces.
-    - So Word styles with spaces need alias mapping (e.g. `.Heading-2` -> `"Heading 2"` in Lua).
-- Direct form `{custom-style="Heading 2"}` is still valid, but less human-friendly.
+Default output naming:
+- Input `legacy.docx` -> output `legacy_remapped.docx`
+- If output is provided without extension, `.docx` is appended.
+- If input is provided without extension, `.docx` is inferred.
 
-**Canonical Markdown Serialization Rules**
-
-- Bullet list indentation is normalized as:
-    - `- <text>` for `List`
-    - `  - <text>` for `List 2`
-    - `    - <text>` for `List 3`
-- Nested ordered clauses use 4-space indentation per level (e.g. `a) ...` then `    i. ...`).
-- `Article 2` must be serialized as explicit `1.1.` style text in Markdown (e.g. `1.1. <text>`), not as a plain `1.` list marker.
-- Avoid loose list formatting:
-    - no extra blank lines before list items
-    - no extra blank lines before `a)`/`i.` subclauses in Articles/Appendices
-    - no extra blank lines before `Article 2` lines
-
-**Implemented Components**
-
-- `filters/docx_to_compact.lua`
-    - DOCX -> MD cleanup/compaction (removes TOC/anchor noise, simplifies style representation).
-- `filters/compact_to_docx.lua`
-    - MD -> DOCX mapping from compact class attributes to Word `custom-style`.
-    - Supports paragraph suffix form like `Text {.Comments}`.
-- `scripts/clean_docx_template.ps1`
-    - Optional DOCX cleanup step (prunes unused styles/metadata/custom XML).
-
-**Core Commands**
-
-- DOCX -> compact MD:
-
+Run examples:
 ```powershell
-pandoc -f docx+styles -t markdown --lua-filter=filters/docx_to_compact.lua contract.docx -o contract.compact.md
+# In activated virtual environment
+python .\remap_legacy_contracts.py legacy
+python .\remap_legacy_contracts.py legacy legacy_clean
+
+# Alternative without activating venv
+uv run python .\remap_legacy_contracts.py legacy
 ```
 
-- MD -> DOCX (with style restoration):
-
-```powershell
-pandoc -f markdown+fancy_lists+lists_without_preceding_blankline -t docx --no-highlight --reference-doc=contract.slim.docx --lua-filter=filters/compact_to_docx.lua contract.compact.md -o contract.out.docx
+Expected output message:
+```text
+Success! Saved to legacy_remapped.docx
 ```
 
-- Optional template cleanup:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\\clean_docx_template.ps1 -InputDocx contract.docx -OutputDocx contract.slim.docx
-```
-
-- MD -> HTML/PDF with CSS:
-
-```powershell
-pandoc contract.compact.md -c contract.css -o contract.html
-pandoc contract.compact.md -c contract.css -o contract.pdf
-```
-
-**Convenience Commands**
-
-- PowerShell script wrappers (work with 1 or 2 parameters):
-
+**Conversion Commands**
+DOCX -> Markdown:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\d2m.ps1 "SaaS contract.docx"
 powershell -ExecutionPolicy Bypass -File .\d2m.ps1 "SaaS contract.docx" "plop.md"
+```
 
+Markdown -> DOCX:
+```powershell
 powershell -ExecutionPolicy Bypass -File .\m2d.ps1 "SaaS contract.md"
 powershell -ExecutionPolicy Bypass -File .\m2d.ps1 "SaaS contract.md" "plop.docx"
 ```
 
-- Extension inference:
-    - If input extension is omitted, command infers `.docx` for `d2m` and `.md` for `m2d`.
-    - If output extension is omitted, command appends `.md` for `d2m` and `.docx` for `m2d`.
-    - Examples:
-        - `d2m "style" "plop"` -> reads `style.docx`, writes `plop.md`
-        - `m2d "plop" "zut"` -> reads `plop.md`, writes `zut.docx`
+Extension inference:
+- `d2m` input defaults to `.docx`, output defaults to `.md`
+- `m2d` input defaults to `.md`, output defaults to `.docx`
+- Example: `d2m "style" "plop"` -> `style.docx` to `plop.md`
+- Example: `m2d "plop" "zut"` -> `plop.md` to `zut.docx`
 
-- Independent legacy mapping tool (separate from standard `d2m`):
-    - Use `legacy_d2m.ps1` to map old Heading styles before compact conversion.
-    - Mapping applied by `filters/legacy_heading_map.lua`:
-        - `Heading 1` -> `Article 1`
-        - `Heading 2` -> `Article 2`
-        - `Heading 3` -> `Article 3`
-        - `Heading 4` -> `Article 4`
-        - `Heading 6` -> `Heading 4`
-    - Examples:
-        - `powershell -ExecutionPolicy Bypass -File .\legacy_d2m.ps1 "legacy-contract.docx"`
-        - `powershell -ExecutionPolicy Bypass -File .\legacy_d2m.ps1 "legacy-contract.docx" "legacy-contract.md"`
-
-- Optional shell commands `d2m` / `m2d` / `ld2m` for the current PowerShell session:
-
+**Optional Shell Helpers**
+Load functions in the current session:
 ```powershell
 . .\commands.ps1
 d2m "SaaS contract.docx"
-d2m "SaaS contract.docx" "plop.md"
 m2d "SaaS contract.md"
-m2d "SaaS contract.md" "plop.docx"
-ld2m "legacy-contract.docx"
-ld2m "legacy-contract.docx" "legacy-contract.md"
 ```
 
-- Optional persistent setup (load `d2m` / `m2d` / `ld2m` in every new PowerShell session):
-
+Install for every new PowerShell session:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\install_commands.ps1
 ```
 
-**Practical Outcome**
+**Recommended Legacy Workflow**
+1. Remap legacy DOCX styles:
+```powershell
+python .\remap_legacy_contracts.py "legacy_contract.docx"
+```
+2. Convert remapped DOCX to Markdown:
+```powershell
+d2m "legacy_contract_remapped.docx"
+```
+3. Edit Markdown.
+4. Convert back to DOCX:
+```powershell
+m2d "legacy_contract_remapped.md"
+```
 
-- This gives a scalable MD-first contract workflow with round-trip style preservation for legal templates.
-- It reduces AI processing overhead versus XML/Word-only editing.
-- It centralizes styling and numbering behavior in filters/CSS instead of manual Word editing across hundreds of templates.
-
-**Known Limits / Expectations**
-
-- “Lossless” means style/format intent is preserved; exact Word internal metadata/IDs/TOC field structures may differ after round-trips.
-- Any new custom Word style must be added once to the Lua style map (alias -> Word style name).
+**Notes**
+- The legacy mapping is now handled in Python (`python-docx`), not in Lua filters.
+- Keep `styles.docx` aligned with your target Word style definitions, since it is used as reference during `m2d`.
