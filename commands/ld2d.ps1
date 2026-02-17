@@ -9,7 +9,7 @@ param(
 
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $filterPath = Join-Path $scriptRoot "..\filters\remap.lua"
-$referenceDoc = Join-Path $scriptRoot "styles.docx"
+$referenceDoc = Join-Path $scriptRoot "..\styles\contract_template.docx"
 $defaultInputExtension = ".docx"
 $defaultOutputExtension = ".docx"
 

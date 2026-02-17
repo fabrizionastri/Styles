@@ -1,5 +1,5 @@
 --[[ Run with:
-pandoc -f docx+styles legacy.docx --lua-filter=remap.lua --reference-doc=styles.docx --no-highlight -o output.docx
+pandoc -f docx+styles legacy.docx --lua-filter=filters/remap.lua --reference-doc=styles/contract_template.docx --no-highlight -o output.docx
 --]]
 
 

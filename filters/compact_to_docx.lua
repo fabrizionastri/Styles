@@ -1,5 +1,5 @@
 -- Compact Markdown -> DOCX style mapper for FlexUp legal styles.
--- Run with: pandoc -f markdown+fancy_lists -t docx --reference-doc=styles.docx --lua-filter=filters/compact_to_docx.lua in.md -o out.docx
+-- Run with: pandoc -f markdown+fancy_lists -t docx --reference-doc=styles/contract_template.docx --lua-filter=filters/compact_to_docx.lua in.md -o out.docx
 
 local utils = pandoc.utils
 
