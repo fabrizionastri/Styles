@@ -1,14 +1,16 @@
+# DOCX <-> Markdown Contract Workflow
+
 **Developer Summary**
 Goal: keep a reliable DOCX <-> Markdown contract workflow, while handling legacy Word documents by remapping styles in DOCX first.
 
 **Current Toolchain**
-- `d2m.ps1`: DOCX -> Markdown (uses `filters/docx_to_compact.lua`)
-- `m2d.ps1`: Markdown -> DOCX (uses `filters/compact_to_docx.lua` and `styles.docx`)
-- `ld2d.ps1`: Legacy DOCX -> remapped DOCX (uses `remap.lua`, `styles.docx`, `--no-highlight`)
-- `commands.ps1`: loads `d2m`, `m2d`, and `ld2d` helper commands in PowerShell
-- `install_commands.ps1`: adds commands loader to your PowerShell profile
-- `remap_legacy_contracts.py`: remaps legacy Word heading styles before conversion
-
+- `d2m.ps1`: converts DOCX -> Markdown (uses `filters/docx_to_compact.lua`)
+- `m2d.ps1`: converts Markdown -> DOCX (uses `filters/compact_to_docx.lua` and `styles.docx`)
+- `ld2d.ps1`: converts the legacy DOCX -> remapped DOCX with new styles (uses `filters/remap.lua`, `styles.docx`)
+- `commands.ps1`: loads `d2m`, `m2d`, and `ld2d` helper commands in PowerShell (only for current session)
+- `install_commands.ps1`: adds commands loader to your PowerShell profile (persists across sessions)
+- `remap_legacy_contracts.py`: remaps legacy Word heading styles before conversion (alternative to `ld2d`)
+  
 **Legacy Remap (DOCX First)**
 Use the Python script before `d2m` when a legacy contract does not follow current styles.
 
