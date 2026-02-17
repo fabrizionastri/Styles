@@ -274,7 +274,7 @@ end
 
 local function render_ordered_items(items, level, list_style, start)
   local lines = {}
-  local indent = string.rep(" ", (level - 1) * 2)
+  local indent = string.rep(" ", (level - 1) * 4)
 
   for i, item in ipairs(items) do
     local n = (start or 1) + (i - 1)
@@ -292,7 +292,7 @@ local function render_ordered_items(items, level, list_style, start)
           lines[#lines + 1] = line
         end
       elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
-        local prefix = string.rep(" ", level * 2)
+        local prefix = string.rep(" ", level * 4)
         for _, line in ipairs(split_lines(b.text or b.c or "")) do
           lines[#lines + 1] = prefix .. line
         end

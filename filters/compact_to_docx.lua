@@ -125,6 +125,64 @@ local function parse_inline_style_suffix(inlines)
   return out, nil
 end
 
+local function split_inlines_on_breaks(inlines)
+  local lines = pandoc.List:new()
+  local current = pandoc.List:new()
+
+  for _, inl in ipairs(inlines) do
+    if inl.t == "SoftBreak" or inl.t == "LineBreak" then
+      lines:insert(current)
+      current = pandoc.List:new()
+    else
+      current:insert(inl)
+    end
+  end
+
+  lines:insert(current)
+  return lines
+end
+
+local function line_has_compact_marker(inlines)
+  local text = trim(utils.stringify(inlines))
+  if text == "" then
+    return false
+  end
+  return text:match("^%d+%.%d+%.?%s+.+$") ~= nil
+    or text:match("^[a-zA-Z]%)%s+.+$") ~= nil
+    or text:match("^[ivxlcdmIVXLCDM]+%.%s+.+$") ~= nil
+end
+
+local function convert_compact_clause_line(inlines, state)
+  local cleaned, suffix_style = parse_inline_style_suffix(inlines)
+
+  if suffix_style then
+    return styled_div(suffix_style, { pandoc.Para(cleaned) }), nil
+  end
+
+  local text = trim(utils.stringify(cleaned))
+
+  if not state.in_appendix then
+    local article2 = text:match("^%d+%.%d+%.?%s+(.+)$")
+    if article2 then
+      return styled_div("Article 2", { pandoc.Para(inlines_from_markdown(article2)) }), nil
+    end
+  end
+
+  local alpha = text:match("^[a-zA-Z]%)%s+(.+)$")
+  if alpha then
+    local style = state.in_appendix and "Appendix 4" or "Article 3"
+    return styled_div(style, { pandoc.Para(inlines_from_markdown(alpha)) }), nil
+  end
+
+  local roman = text:match("^[ivxlcdmIVXLCDM]+%.%s+(.+)$")
+  if roman then
+    local style = state.in_appendix and "Appendix 5" or "Article 4"
+    return styled_div(style, { pandoc.Para(inlines_from_markdown(roman)) }), nil
+  end
+
+  return nil, cleaned
+end
+
 local function append_blocks(dst, src)
   if src == nil then
     return
@@ -245,29 +303,37 @@ local function convert_blocks(blocks, state, ctx)
       end
 
     elseif block.t == "Para" or block.t == "Plain" then
-      local inlines = block.content
-      local cleaned, suffix_style = parse_inline_style_suffix(inlines)
+      local lines = split_inlines_on_breaks(block.content)
+      local has_compact_multiline = false
+      if #lines > 1 then
+        for _, line in ipairs(lines) do
+          if line_has_compact_marker(line) then
+            has_compact_multiline = true
+            break
+          end
+        end
+      end
 
-      if suffix_style then
-        append_blocks(out, styled_div(suffix_style, { pandoc.Para(cleaned) }))
-      else
-        local text = trim(utils.stringify(cleaned))
-        if not state.in_appendix then
-          local article2 = text:match("^%d+%.%d+%.?%s+(.+)$")
-          if article2 then
-            append_blocks(out, styled_div("Article 2", { pandoc.Para(inlines_from_markdown(article2)) }))
-          else
-            if block.t == "Para" then
-              out:insert(pandoc.Para(cleaned))
+      if has_compact_multiline then
+        for _, line in ipairs(lines) do
+          if #line > 0 then
+            local styled, fallback = convert_compact_clause_line(line, state)
+            if styled then
+              append_blocks(out, styled)
             else
-              out:insert(pandoc.Plain(cleaned))
+              out:insert(pandoc.Para(fallback))
             end
           end
+        end
+      else
+        local styled, fallback = convert_compact_clause_line(block.content, state)
+        if styled then
+          append_blocks(out, styled)
         else
           if block.t == "Para" then
-            out:insert(pandoc.Para(cleaned))
+            out:insert(pandoc.Para(fallback))
           else
-            out:insert(pandoc.Plain(cleaned))
+            out:insert(pandoc.Plain(fallback))
           end
         end
       end
@@ -293,24 +359,21 @@ local function convert_blocks(blocks, state, ctx)
 
     elseif block.t == "OrderedList" then
       local item_style = ordered_list_style(block, state)
-      if item_style then
-        local flattened = pandoc.List:new()
-        for _, item in ipairs(block.content) do
-          local converted_item = convert_blocks(item, state, {
-            bullet_depth = ctx.bullet_depth,
-          })
+      local new_items = pandoc.List:new()
+      for _, item in ipairs(block.content) do
+        local converted_item = convert_blocks(item, state, {
+          bullet_depth = ctx.bullet_depth,
+        })
+        if item_style then
           converted_item = wrap_first_para_like(converted_item, item_style)
-          append_blocks(flattened, converted_item)
-        end
-        append_blocks(out, flattened)
-      else
-        local new_items = pandoc.List:new()
-        for _, item in ipairs(block.content) do
-          local converted_item = convert_blocks(item, state, {
-            bullet_depth = ctx.bullet_depth,
-          })
+          append_blocks(new_items, converted_item)
+        else
           new_items:insert(converted_item)
         end
+      end
+      if item_style then
+        append_blocks(out, new_items)
+      else
         out:insert(pandoc.OrderedList(new_items, block.listAttributes))
       end
 

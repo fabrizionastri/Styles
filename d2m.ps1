@@ -9,6 +9,56 @@ param(
 
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $filterPath = Join-Path $scriptRoot "filters\docx_to_compact.lua"
+$defaultInputExtension = ".docx"
+$defaultOutputExtension = ".md"
+
+function Resolve-InputPath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$PathValue,
+
+    [Parameter(Mandatory = $true)]
+    [string]$DefaultExtension
+  )
+
+  if (Test-Path -LiteralPath $PathValue) {
+    return (Resolve-Path -LiteralPath $PathValue -ErrorAction Stop).Path
+  }
+
+  if ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($PathValue))) {
+    $withExt = $PathValue + $DefaultExtension
+    if (Test-Path -LiteralPath $withExt) {
+      return (Resolve-Path -LiteralPath $withExt -ErrorAction Stop).Path
+    }
+  }
+
+  throw "Input file not found: $PathValue"
+}
+
+function Resolve-OutputPath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$InputPath,
+
+    [Parameter()]
+    [string]$OutputPath,
+
+    [Parameter(Mandatory = $true)]
+    [string]$DefaultExtension
+  )
+
+  if ([string]::IsNullOrWhiteSpace($OutputPath)) {
+    $inputDir = Split-Path -Parent $InputPath
+    $inputBase = [System.IO.Path]::GetFileNameWithoutExtension($InputPath)
+    return (Join-Path $inputDir ($inputBase + $DefaultExtension))
+  }
+
+  if ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($OutputPath))) {
+    return ($OutputPath + $DefaultExtension)
+  }
+
+  return $OutputPath
+}
 
 if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) {
   throw "Pandoc is not installed or not in PATH."
@@ -18,23 +68,18 @@ if (-not (Test-Path -LiteralPath $filterPath)) {
   throw "Missing filter: $filterPath"
 }
 
-$resolvedInput = (Resolve-Path -LiteralPath $InputFile -ErrorAction Stop).Path
-
-if ([string]::IsNullOrWhiteSpace($OutputFile)) {
-  $inputDir = Split-Path -Parent $resolvedInput
-  $inputBase = [System.IO.Path]::GetFileNameWithoutExtension($resolvedInput)
-  $OutputFile = Join-Path $inputDir ($inputBase + ".md")
-}
+$resolvedInput = Resolve-InputPath -PathValue $InputFile -DefaultExtension $defaultInputExtension
+$resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $OutputFile -DefaultExtension $defaultOutputExtension
 
 & pandoc `
   -f "docx+styles" `
   -t "markdown" `
   --lua-filter="$filterPath" `
   "$resolvedInput" `
-  -o "$OutputFile"
+  -o "$resolvedOutput"
 
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
-Write-Output "Created: $OutputFile"
+Write-Output "Created: $resolvedOutput"

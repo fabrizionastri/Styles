@@ -29,6 +29,7 @@ Goal: support two-way authoring of contracts in both MS Word and Markdown, with 
     - `- <text>` for `List`
     - `  - <text>` for `List 2`
     - `    - <text>` for `List 3`
+- Nested ordered clauses use 4-space indentation per level (e.g. `a) ...` then `    i. ...`).
 - `Article 2` must be serialized as explicit `1.1.` style text in Markdown (e.g. `1.1. <text>`), not as a plain `1.` list marker.
 - Avoid loose list formatting:
     - no extra blank lines before list items
@@ -83,6 +84,13 @@ powershell -ExecutionPolicy Bypass -File .\d2m.ps1 "SaaS contract.docx" "plop.md
 powershell -ExecutionPolicy Bypass -File .\m2d.ps1 "SaaS contract.md"
 powershell -ExecutionPolicy Bypass -File .\m2d.ps1 "SaaS contract.md" "plop.docx"
 ```
+
+- Extension inference:
+    - If input extension is omitted, command infers `.docx` for `d2m` and `.md` for `m2d`.
+    - If output extension is omitted, command appends `.md` for `d2m` and `.docx` for `m2d`.
+    - Examples:
+        - `d2m "style" "plop"` -> reads `style.docx`, writes `plop.md`
+        - `m2d "plop" "zut"` -> reads `plop.md`, writes `zut.docx`
 
 - Optional shell commands `d2m` / `m2d` for the current PowerShell session:
 
