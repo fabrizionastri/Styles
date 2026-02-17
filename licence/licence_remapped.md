@@ -1,8 +1,8 @@
-# FlexUp Licence General Conditions (Licence-GC)
+FlexUp Licence General Conditions (Licence-GC)
 
-Published by FlexUp on 19^th^ November 2025 {.PublishedOn}
+Published by FlexUp on 19^th^ November 2025
 
-> *Quick Guide:*
+*Quick Guide:*
 
 - *Using for your own business? → Limited (free)*
 - *Advising ONE paid client? → Limited (free)*
@@ -12,7 +12,6 @@ Revenues)*
 A binding contractual relationship (the "**Licence**") is automatically
 formed when a Licensee uses the Licensed Material in accordance with
 these terms, regardless of whether a separate agreement is signed.
-{.ToDo}
 
 1.3. By accessing or using the Licensed Material, the Licensee enters
 and agrees to be bound by the provisions applicable to the relevant form
@@ -21,8 +20,7 @@ of the Licence, depending on the nature and extent of their use.
 1.4. The FlexUp Licence reflects FlexUp's commitment to openness,
 collaboration and fairness.
 
-It allows free circulation, adaptation and redistribution of the
-Licensed Material, provided that: {.ToDo}
+  It allows free circulation, adaptation and redistribution of the Licensed Material, provided that:
 
 a) Proper attribution to FlexUp is maintained;
 b) Redistributions remain free of charge and under equivalent licence
@@ -30,12 +28,8 @@ terms; and
 c) Where commercial benefit is obtained from the use of FlexUp IP, a fair
 contribution is made to FlexUp in accordance with the principles of the
 Licence and the subsequent articles.
-1.5. While the Licence is automatically binding upon first use of the
-Licensed Material, Licensees shall endeavour, as soon as possible, to
-formalise a Licence Special Conditions (Licence-SC) that identify the
-Parties and, in particular when clarity is required regarding commercial
-terms that may modify or supplement certain provisions of these General
-Conditions.
+1.5. **Binding nature**
+  While the Licence is automatically binding upon first use of the Licensed Material, Licensees shall endeavour, as soon as possible, to formalise a Licence Special Conditions (**Licence-SC**) that identify the Parties and, in particular when clarity is required regarding commercial terms that may modify or supplement certain provisions of these General Conditions.
 
 ### Article 2. Definitions and Interpretation
 
@@ -63,35 +57,37 @@ following terms and can be found on the FlexUp website
 |          | 417, represented by Fabrizio Nastri in his role as        |
 |          | Gérant.                                                   |
 +----------+-----------------------------------------------------------+
-| **Inte   | ::: {custom-style="List"}                                 |
-| llectual | Means any and all information, materials, data, and       |
-| Property | creative or technical outputs, of any kind, that FlexUp   |
-| (IP)**   | has created, developed, acquired, or holds rights in,     |
-|          | whether or not protected by statute, as well as knowledge |
-|          | of a technical, scientific, creative or commercial        |
-|          | nature, including but not limited to: inventions,         |
-|          | know-how, manufacturing and/or trade secrets, test        |
-|          | results, data, models, industrial design, logos, mask     |
-|          | works, design flows, methodologies, databases, software   |
-|          | (in both source code and object code form, including any  |
-|          | modules, components, scripts, configurations, and         |
-|          | derivative code), files, plans, diagrams, drawings,       |
-|          | reports, works of authorship, formulas and other          |
-|          | technical, scientific, commercial, or creative, in any    |
-|          | format or medium whatsoever.                              |
-|          | :::                                                       |
+| **Inte   | -   ::: {custom-style="List"}                             |
+| llectual |     Means any and all information, materials, data, and   |
+| Property |     creative or technical outputs, of any kind, that      |
+| (IP)**   |     FlexUp has created, developed, acquired, or holds     |
+|          |     rights in, whether or not protected by statute, as    |
+|          |     well as knowledge of a technical, scientific,         |
+|          |     creative or commercial nature, including but not      |
+|          |     limited to: inventions, know-how, manufacturing       |
+|          |     and/or trade secrets, test results, data, models,     |
+|          |     industrial design, logos, mask works, design flows,   |
+|          |     methodologies, databases, software (in both source    |
+|          |     code and object code form, including any modules,     |
+|          |     components, scripts, configurations, and derivative   |
+|          |     code), files, plans, diagrams, drawings, reports,     |
+|          |     works of authorship, formulas and other technical,    |
+|          |     scientific, commercial, or creative, in any format or |
+|          |     medium whatsoever.                                    |
+|          |     :::                                                   |
 +----------+-----------------------------------------------------------+
-| **IP     | ::: {custom-style="List"}                                 |
-| Rights** | Means all property rights arising from or in connection   |
-|          | with the Intellectual Property including without          |
-|          | limitation patents, rights of priority, copyrights,       |
-|          | design rights, corporate names, domain names, trade       |
-|          | names, trademarks, trade dress, service marks, and all    |
-|          | applications, registrations, renewals, extensions and     |
-|          | continuations thereof, as well as any other intangible    |
-|          | rights or forms of legally protectable proprietary        |
-|          | information recognised under applicable law.              |
-|          | :::                                                       |
+| **IP     | -   ::: {custom-style="List"}                             |
+| Rights** |     Means all property rights arising from or in          |
+|          |     connection with the Intellectual Property including   |
+|          |     without limitation patents, rights of priority,       |
+|          |     copyrights, design rights, corporate names, domain    |
+|          |     names, trade names, trademarks, trade dress, service  |
+|          |     marks, and all applications, registrations, renewals, |
+|          |     extensions and continuations thereof, as well as any  |
+|          |     other intangible rights or forms of legally           |
+|          |     protectable proprietary information recognised under  |
+|          |     applicable law.                                       |
+|          |     :::                                                   |
 +----------+-----------------------------------------------------------+
 | **L      | The contractual agreement between FlexUp and a Licensee   |
 | icence** | under which the Licensee is granted to use the Licensed   |
@@ -106,9 +102,9 @@ following terms and can be found on the FlexUp website
 | Cond     |                                                           |
 | itions** |                                                           |
 +----------+-----------------------------------------------------------+
-| **Lic    | The document that identifies a particular Licensee and    |
-| ence-SC\ | sets out the specific commercial and operational terms    |
-| **or     | applicable to their use of the Licensed Material, which   |
+| **Licen  | The document that identifies a particular Licensee and    |
+| ce-SC**\ | sets out the specific commercial and operational terms    |
+| or       | applicable to their use of the Licensed Material, which   |
 | *        | supplement, modify or clarify these General Conditions.   |
 | *Special | The Licence-GC, together with the Licence-SC, forms an    |
 | Cond     | integral part and shall be read and interpreted in        |
@@ -134,83 +130,85 @@ following terms and can be found on the FlexUp website
 |          | accessing, downloading, or otherwise using such material  |
 |          | in accordance with the terms herein.                      |
 +----------+-----------------------------------------------------------+
-| *        | ::: {custom-style="List"}                                 |
-| *Limited | Refers to the scope of use permitted under the *free*     |
-| L        | Limited Licence, as detailed in Article 5.1               |
-| icence** | :::                                                       |
+| *        | -   ::: {custom-style="List"}                             |
+| *Limited |     Refers to the scope of use permitted under the *free* |
+| L        |     Limited Licence, as detailed in Article 5.1           |
+| icence** |     :::                                                   |
 +----------+-----------------------------------------------------------+
-| **       | ::: {custom-style="List"}                                 |
-| Extended | Refers to any use of the Licensed Material that falls     |
-| L        | outside the scope of Limited Use, as detailed in Article  |
-| icence** | 5.2                                                       |
-|          | :::                                                       |
+| **       | -   ::: {custom-style="List"}                             |
+| Extended |     Refers to any use of the Licensed Material that falls |
+| L        |     outside the scope of Limited Use, as detailed in      |
+| icence** |     Article 5.2                                           |
+|          |     :::                                                   |
 +----------+-----------------------------------------------------------+
-| **M      | ::: {custom-style="List"}                                 |
-| onetised | Means any activity that generates revenue, profit, or     |
-| Ac       | financial benefit directly or indirectly attributable to  |
-| tivity** | the use, implementation, or incorporation of the Licensed |
-|          | Material.                                                 |
-|          | :::                                                       |
+| **M      | -   ::: {custom-style="List"}                             |
+| onetised |     Means any activity that generates revenue, profit, or |
+| Ac       |     financial benefit directly or indirectly attributable |
+| tivity** |     to the use, implementation, or incorporation of the   |
+|          |     Licensed Material.                                    |
+|          |     :::                                                   |
 +----------+-----------------------------------------------------------+
-| **Flex   | ::: {custom-style="List"}                                 |
-| Up-Based | Means the portion of any revenue, fee, commission,        |
-| R        | remuneration, or other financial benefit that is          |
-| evenue** | reasonably linked to the use, implementation, reference,  |
-|          | or incorporation of the Licensed Material, whether        |
-|          | directly or indirectly. FlexUp-Based Revenue shall be     |
-|          | determined in good faith based on the proportional value  |
-|          | of the Licensed Material in the product, service,         |
-|          | deliverable, engagement, or activity from which the       |
-|          | revenue is generated. FlexUp-Based Revenue does not       |
-|          | include revenue from activities that do not rely on,      |
-|          | implement, or meaningfully use the Licensed Material.     |
-|          | Where no revenue is generated from a given activity, the  |
-|          | FlexUp-Based Revenue is zero.                             |
-|          | :::                                                       |
+| **Flex   | -   ::: {custom-style="List"}                             |
+| Up-Based |     Means the portion of any revenue, fee, commission,    |
+| R        |     remuneration, or other financial benefit that is      |
+| evenue** |     reasonably linked to the use, implementation,         |
+|          |     reference, or incorporation of the Licensed Material, |
+|          |     whether directly or indirectly. FlexUp-Based Revenue  |
+|          |     shall be determined in good faith based on the        |
+|          |     proportional value of the Licensed Material in the    |
+|          |     product, service, deliverable, engagement, or         |
+|          |     activity from which the revenue is generated.         |
+|          |     FlexUp-Based Revenue does not include revenue from    |
+|          |     activities that do not rely on, implement, or         |
+|          |     meaningfully use the Licensed Material. Where no      |
+|          |     revenue is generated from a given activity, the       |
+|          |     FlexUp-Based Revenue is zero.                         |
+|          |     :::                                                   |
 +----------+-----------------------------------------------------------+
 
-### Article 3. Intellectual Property Reservation
+### Article 1. Intellectual Property Reservation
 
-3.1. Ownership
+1.1. Ownership
 
 FlexUp retains sole and exclusive ownership of all IP Rights in and to
 the IP, whether registered or unregistered, whether existing now or
-arising in the future. {.ToDo}
+arising in the future.
 
-3.2. No Transfer or Implied Licence
+1.2. No Transfer or Implied Licence
 
 Except as expressly provided in this Licence, nothing in this document
 grant or imply any transfer or assignment of the intellectual property
-rights to the Licence. {.ToDo}
+rights to the Licence.
 
-### Article 4. Grant of Licence
+### Article 2. Grant of Licence
 
-4.1. The Licence comes in two forms, depending on the Licensee's
+2.1. The Licence comes in two forms, depending on the Licensee's
 effective use of the Licensed Material:
-a) Limited Licence: The Limited Licence grants the Licensee permission to
-use the Licensed Material strictly within the scope of Limited Use as
+a) **Limited Licence**: The Limited Licence grants the Licensee permission
+to use the Licensed Material strictly within the scope of Limited Use as
 defined in Article 5.1. The Limited Licence is automatically formed when
 a Licensee uses the Licensed Material and is free of charge.
-b) Extended Licence: The Extended Licence is required to use the Licensed
-Material for Extended Use as defined in Article 5.2.
-4.2. The Extended Licence may be acquired as follows:
-a) Automatic Upgrade Clause: If the Licensee's use evolves and triggers any
-of the conditions mentioned in Article 5.2, the Limited Licence
+b) **Extended Licence**: The Extended Licence is required to use the
+Licensed Material for Extended Use as defined in Article 5.2.
+2.2. The Extended Licence may be acquired as follows:
+a) **Automatic Upgrade Clause**: If the Licensee's use evolves and triggers
+any of the conditions mentioned in Article 5.2, the Limited Licence
 automatically converts to an Extended Licence as of the trigger date,
 and the obligations under Article 8.1 (Fees and Royalties) immediately
 apply. The Licensee shall notify FlexUp within 30 days of the trigger
 event.
-b) Manual Upgrade: You may also request an Extended Licence at any time;
-such request does not waive any Automatic Upgrade already triggered.
+b) **Manual Upgrade:** You may also request an Extended Licence at any
+time; such request does not waive any Automatic Upgrade already
+triggered.
 
-### Article 5. Scope and Tiers of Use
+### Article 3. Scope and Tiers of Use
 
-5.1. Limited Use Licence Scope
+3.1. **Limited Use Licence Scope**
 
 The Limited Licence grants a Licensee the right to use the Licensed
 Material for personal or internal purposes only within the limits set
 out below. Any use not expressly permitted herein falls outside the
-scope of this Limited Licence: {.ToDo}
+scope of this Limited Licence:
 
 a) For transactions (i.e., contracts, orders) to which the Licensee is a
 direct party;
@@ -222,9 +220,9 @@ Licensee, including use by its officers, employees and authorised agents
 acting strictly on its behalf. Such use shall not extend to affiliates,
 subsidiaries, or third parties;
 d) For paid professional advisors (such as lawyers, accountants, or
-consultants) to provide advice related to the Licensed Material to one
-(1) single client, within any continuous twelve (12) month period;
-e) For non-commercial, personal educational or testing purposes;
+consultants) to provide advice related to the Licensed Material **to one
+(1) single client**, within any continuous twelve (12) month period;
+e) For **non-commercial**, personal educational or testing purposes;
 f) Republishing, translating, or adapting the Licensed Material for
 external distribution, provided that such use is non-commercial,
 includes proper attribution to FlexUp, and remains under the same FlexUp
@@ -234,53 +232,52 @@ monetisation mechanism (including but not limited to advertising,
 sponsorship, paid access, affiliate or referral fees, commissions or
 donations), it shall be deemed Extended Use pursuant to Article 5.2, and
 the royalty provisions of shall apply.
-5.2. Extended Use Licence Scope
+3.2. **Extended Use Licence Scope**
 
 The Extended Use Licence automatically applies to any activity exceeding
-the Limited Use Licence, including but not limited to: {.ToDo}
+the Limited Use Licence, including but not limited to:
 
-a) Multiple Client Engagements: Providing paid professional or consulting
-services using or referencing the Licensed Material to more than one (1)
-client within any rolling 12-month period or incorporating the FlexUp
-Model into paid professional activity;
-b) Public Marketing: Using the \"FlexUp\" name, logo, or related trademarks
-in any public-facing materials (such as a website, social media profile,
-advertisement, etc.) to promote or solicit paid professional services;
-c) Derivative Distribution: The Licensee translates, modifies, or
+a) **Multiple Client** **Engagements**: Providing paid professional or
+consulting services using or referencing the Licensed Material to more
+than one (1) client within any rolling 12-month period or incorporating
+the FlexUp Model into paid professional activity;
+b) **Public Marketing**: Using the \"FlexUp\" name, logo, or related
+trademarks in any public-facing materials (such as a website, social
+media profile, advertisement, etc.) to promote or solicit paid
+professional services;
+c) **Derivative Distribution**: The Licensee translates, modifies, or
 re-packages the Licensed Material and distributes it (whether free or
 paid);
-d) Integration: Integration into tools or systems for third parties.
-e) Monetised Activities: Any Monetised Activity constitutes Extended Use,
-except professional advisory to a single client as permitted under
+d) **Integration**: Integration into tools or systems for third parties.
+e) **Monetised Activities**: Any Monetised Activity constitutes Extended
+Use, except professional advisory to a single client as permitted under
 Article 5.1.d.
 
 Extended Use does not automatically imply that a Royalty Fee is due;
 Royalty is owed only when the Licensee generates Revenue Attributable to
-FlexUp pursuant to Article 8. {.ToDo}
+FlexUp pursuant to Article 8.
 
-### Article 6. General restrictions
+### Article 4. General restrictions
 
-6.1. The following General restrictions are applicable to all licences:
+4.1. The following General restrictions are applicable to all licences:
 a) Reverse-engineer, decompile, disassemble, or otherwise attempt to drive
 the source code, data structures, or algorithms underlying the FlexUp
-Platform or Model; {.List-Paragraph}
+Platform or Model;
 b) Create, market, or operate any model, application, or service that is
 represented, promoted, or passed off as FlexUp, or as being officially
 endorsed or certified by FlexUp, unless expressly authorised;
-{.List-Paragraph}
 c) Remove, alter, or obscure any trademark, logo, copyrights notice, or
 attribution appearing on or within the Licensed Material;
-{.List-Paragraph}
 d) Engage in any other activity that constitutes misuse, infringes
 third-party rights, or is inconsistent or improper with the intended
-fair use of this Licence. {.List-Paragraph}
+fair use of this Licence.
     a) Granting any sublicense, assignment, or other transfer of rights under
     this Licence;
     b) Using the FlexUp name, logo, or marks in a way that suggests
     endorsement, partnership, certification, or affiliation;
     c) Operating a multi-tenant or publicly accessible digital platform that
-    incorporates the FlexUp Model ("Platform Use"), unless otherwise agreed
-    in writing;
+    incorporates the FlexUp Model ("**Platform Use**"), unless otherwise
+    agreed in writing;
     d) Participating in the FlexUp Partner / Franchise Program, which always
     requires a separate written agreement;
     e) Incorporating the Licensed Material into tools, apps, training
@@ -288,7 +285,7 @@ fair use of this Licence. {.List-Paragraph}
 
 This article applies only to Extended Use Licensees.
 
-1.1. Audit Rights
+1.1. **Audit Rights**
 
 FlexUp reserves the right to appoint an independent third party bound by
 confidentiality to audit, on at least 10 days' notice, once per year,
@@ -299,14 +296,14 @@ percent (5%) in FlexUp\'s favour, in which case the Licensee shall bear
 the cost of the audit and pay any underpaid royalties plus interest in
 accordance with the interest provisions under Article 8.3. The audit
 shall conclude with a written summary of findings shared with the
-Licensee. {.ToDo}
+Licensee.
 
-1.2. Failure to declare Extended Use
+1.2. **Failure to declare Extended Use**
 
 Failure by the Licensee to declare any Extended Use, or to report and
 remit royalties within the required timeframe, shall constitute a
 material breach of this Licence and shall trigger the following
-consequences: {.ToDo}
+consequences:
 
 a) Immediate conversion of the Limited Use Licence to the Extended Use
 Licence;
@@ -322,15 +319,15 @@ connection with the breach or its enforcement.
 
 ### Article 2. Payment and Royalties
 
-2.1. Royalty Fee
+2.1. **Royalty Fee**
 a) In consideration for the rights granted under the Extended Licence, the
-Licensee shall pay to FlexUp a royalty fee of ten percent (10%) of the
-FlexUp-Based Revenue.
+Licensee shall pay to FlexUp a royalty fee of **ten percent (10%)** of
+the FlexUp-Based Revenue.
 b) FlexUp-Based Revenue includes revenue derived from any professional
 activity in which the Licensed Material is used, referenced,
 implemented, or relied upon, even if the Licensed Material represents
 only a portion of the total value delivered.
-2.2. Reporting and Payment
+2.2. **Reporting and Payment**
 a) The Licensee shall provide FlexUp with a quarterly report detailing all
 gross revenue subject to the Royalty Fee through any means or channels
 made available by FlexUp, within thirty (30) days of the end of each
@@ -347,11 +344,11 @@ activity is less than 1 000 € per calendar quarter, such revenue shall
 be reported on an annual basis only, and only give rise to a royalty
 payment if the royalty due is equal or greater to 100 € per calendar
 year.
-2.3. Late payment
+2.3. **Late payment**
 
 In case of failure to pay by the due date, the Licensee shall
 automatically incur late payment penalties on the overdue amount,
-without prejudice to FlexUp's other rights or remedies: {.ToDo}
+without prejudice to FlexUp's other rights or remedies:
 
 a) A fixed charge of ten percent (10%) of the overdue amount plus interest
 accruing daily at an annual rate of five percent (5%) from the due date
@@ -392,23 +389,23 @@ discussion before any formal proceedings.
 This Licence operates based on principles of fair use and collaborative
 open-source development, including:
 
-4.1. Distribution: Licensees may distribute the Licensed Material
+4.1. **Distribution**: Licensees may distribute the Licensed Material
 (including any Adapted Material) free of charge and under the same terms
 outlined in this FlexUp Licence.
 
-4.2. Attribution: Licensees must attribute FlexUp as the source of the
-Licensed Material, providing a link to this Licence. Attribution must be
-made in a reasonable and customary manner, provided that it shall not
-imply any sponsorship, endorsement or association by FlexUp.
+4.2. **Attribution**: Licensees must attribute FlexUp as the source of
+the Licensed Material, providing a link to this Licence. Attribution
+must be made in a reasonable and customary manner, provided that it
+shall not imply any sponsorship, endorsement or association by FlexUp.
 
-4.3. Modifications: If transformed Material is created upon the Licensed
-Material, Licensees shall provide clear indications of the changes made
-to the original Licensed Material.
+4.3. **Modifications**: If transformed Material is created upon the
+Licensed Material, Licensees shall provide clear indications of the
+changes made to the original Licensed Material.
 
-4.4. Feedback: Licensees shall notify FlexUp of any modifications that
-may reasonably be considered an improvement to the Licensed Material.
-FlexUp may incorporate such improvements into future versions and may
-publicly acknowledge the contributor when authorised.
+4.4. **Feedback**: Licensees shall notify FlexUp of any modifications
+that may reasonably be considered an improvement to the Licensed
+Material. FlexUp may incorporate such improvements into future versions
+and may publicly acknowledge the contributor when authorised.
 
 4.5. Licensee shall not apply any other legal terms or technological
 measures, or other restrictions that would prevent or limit others from
@@ -428,27 +425,27 @@ Royalties) shall apply.
 
 ### Article 5. Trademarks
 
-5.1. The "FlexUp" name, logo and all associated visual identity elements
-are protected by trademark.
+5.1. The "**FlexUp**" name, logo and all associated visual identity
+elements are protected by trademark.
 
-5.2. Permitted Use (no authorisation needed)
+5.2. **Permitted Use** (no authorisation needed)
 
 Licensees may use the FlexUp name and logo solely for factual
 statements, such as indicating that they use, rely on, or implement
 FlexUp, provided such use does not suggest endorsement, partnership,
-affiliation, or certification. {.ToDo}
+affiliation, or certification.
 
-5.3. Use requiring an Extended Licence
+5.3. **Use requiring an Extended Licence**
 
 Licensees operating under an Extended Licence may reference FlexUp in
 professional offerings (e.g., "FlexUp-based consulting"), provided such
-use remains factual and non-misleading. {.ToDo}
+use remains factual and non-misleading.
 
-5.4. Use requiring separate agreement
+5.4. **Use requiring separate agreement**
 
 Any use implying endorsement (e.g. "Authorised FlexUp Advisor",
 "Certified FlexUp Partner") requires a separate written agreement under
-the FlexUp Partner or Franchise Program. {.ToDo}
+the FlexUp Partner or Franchise Program.
 
 ### Article 6. Disclaimers and Limitations
 
@@ -497,38 +494,39 @@ be informed of any updates to the FlexUp Licence.
 
 ### Article 8. Licence Term and Termination
 
-8.1. Definitions for This Article: For the purposes of this Article, the
-following definitions apply:
-a) \"Expire\" or \"Expiry\" refers to the natural cessation of the Extended
-Licence upon reaching a pre-defined Expiry Date.
-b) \"Cancel\" or \"Cancellation\" means the early cessation of the Licence
-by either Party in accordance with the terms of this Article.
-c) \"Termination\" refers to the cessation of the Licence for any reason,
-whether by Expiry or Cancellation
-8.2. Effective Date: The Licence becomes effective as follows:
-a) Limited Licence: The Limited Licence is automatically formed and becomes
-effective upon the Licensee\'s first use of any Licensed Material.
-b) Extended Licence: The Extended Licence becomes effective on the date on
-which the Licensee formally request the Extended Licence; or on the date
-on which any of the triggering events described in Article 5.2
-8.3. Duration
-a) Limited Licence: The Limited Licence is granted for an indefinite
+8.1. **Definitions for This Article**: For the purposes of this Article,
+the following definitions apply:
+a) \"**Expire**\" or \"**Expiry**\" refers to the natural cessation of the
+Extended Licence upon reaching a pre-defined Expiry Date.
+b) \"**Cancel**\" or \"**Cancellation**\" means the early cessation of the
+Licence by either Party in accordance with the terms of this Article.
+c) \"**Termination**\" refers to the cessation of the Licence for any
+reason, whether by Expiry or Cancellation
+8.2. **Effective Date**: The Licence becomes effective as follows:
+a) **Limited Licence**: The Limited Licence is automatically formed and
+becomes effective upon the Licensee\'s first use of any Licensed
+Material.
+b) **Extended Licence**: The Extended Licence becomes effective on the date
+on which the Licensee formally request the Extended Licence; or on the
+date on which any of the triggering events described in Article 5.2
+8.3. **Duration**
+a) **Limited Licence**: The Limited Licence is granted for an indefinite
 duration and shall continue until it is terminated by either Party in
 accordance with this Article.
-b) Extended Licence: The Extended Licence is granted for an indefinite
+b) **Extended Licence**: The Extended Licence is granted for an indefinite
 duration and shall continue until it is terminated by either Party in
 accordance with this Article
-8.4. Termination by the Licensee
-a) Limited Licence: Licensee may terminate the Limited Licence at any time
-and for any reason by ceasing all use of the Licensed Material and
+8.4. **Termination by the Licensee**
+a) **Limited Licence**: Licensee may terminate the Limited Licence at any
+time and for any reason by ceasing all use of the Licensed Material and
 destroying all copies in their possession or control.
-b) Extended Licence: Licensee may terminate the Extended Licence at any
+b) **Extended Licence**: Licensee may terminate the Extended Licence at any
 time and for any reason by providing FlexUp within thirty (30) days'
 prior written notice.
-8.5. Termination by FlexUp
+8.5. **Termination by FlexUp**
 
 FlexUp may terminate this Licence immediately without prior notice if
-the Licensee: {.ToDo}
+the Licensee:
 
 a) Breaches any provision of this Licence, including use for Extended
 Purposes without an Extended Licence, failure to attribute or
@@ -540,7 +538,7 @@ reputation or the integrity of the Licensed Material;
 d) Becomes insolvent, files for bankruptcy or ceases business operations;
 or
 e) Uses the Licensed Material for any illegal or unethical purpose.
-8.6. Effect of Termination: Upon termination of this Licence:
+8.6. **Effect of Termination**: Upon termination of this Licence:
 a) The Licensee shall immediately cease all use of the Licensed Material.
 b) The Licensee must destroy all copies of the Licensed Material in their
 possession except those already incorporated into executed contracts or
@@ -552,24 +550,24 @@ they have complied with the obligations in this section.
 e) Pay to FlexUp all outstanding Royalties, Fees or other amounts due under
 this Licence, including any accrued interest or surcharges applicable at
 the date of termination.
-8.7. Survival: The following Articles of this Licence shall survive any
-termination:
-a) (Trademarks)
+8.7. **Survival**: The following Articles of this Licence shall survive
+any termination:
+a) Article 11 (Trademarks)
 b) Article 12 (Disclaimers and Limitations)
 c) Any other provisions which expressly or by implication are intended to
 continue in force after termination, including but not limited to
 clauses relating to intellectual property right, confidentiality,
 payment, and limitation of liability.
-8.8. Reinstatement: FlexUp may, at its sole discretion, reinstate the
-Licence if the Licensee remedies any breach to FlexUp\'s satisfaction.
-Any reinstatement may be subject to additional terms and conditions as
-specified by FlexUp.
+8.8. **Reinstatement**: FlexUp may, at its sole discretion, reinstate
+the Licence if the Licensee remedies any breach to FlexUp\'s
+satisfaction. Any reinstatement may be subject to additional terms and
+conditions as specified by FlexUp.
 
-8.9. No Refund: In the event of termination, FlexUp shall not be
+8.9. **No Refund**: In the event of termination, FlexUp shall not be
 obligated to refund any fees paid by the Licensee for Extended Use or
 any other services.
 
-8.10. Reservation of Rights: FlexUp reserves the right to pursue any
+8.10. **Reservation of Rights**: FlexUp reserves the right to pursue any
 additional legal remedies in the event of a breach of this Licence.
 
 ### Article 9. Miscellaneous
@@ -578,7 +576,7 @@ additional legal remedies in the event of a breach of this Licence.
 have read this FlexUp Licence, understand it, and agree to be bound by
 its terms and conditions.
 
-9.2. Entire Agreement: This Licence constitutes the entire agreement
+9.2. **Entire Agreement**: This Licence constitutes the entire agreement
 between FlexUp and the Licensee and supersedes any prior communications
 or understandings relating to its subject matter.
 
@@ -589,28 +587,28 @@ Special Conditions shall prevail.
 
 In the absence of a signed Licence-SC, these General Conditions shall
 apply in full and exclusively govern the licensing relationship between
-FlexUp and the Licensee. {.ToDo}
+FlexUp and the Licensee.
 
-9.4. Severability: If any provision of this Licence is held to be
+9.4. **Severability**: If any provision of this Licence is held to be
 unenforceable or invalid, such provision will be modified and
 interpreted to accomplish the objectives of such provision to the
 greatest extent possible under applicable law, and the remaining
 provisions will continue in full force and effect.
 
-9.5. Jurisdiction: This Licence shall be governed by and construed in
-accordance with the laws of France, without regard to its conflict of
+9.5. **Jurisdiction**: This Licence shall be governed by and construed
+in accordance with the laws of France, without regard to its conflict of
 law provisions. Any dispute arising out of or in connection with this
 Licence shall be brought exclusively to the courts of Paris, France, and
 each Party irrevocably waives any objection to such jurisdiction,
 including on grounds of *forum non conveniens*.
 
-9.6. Contact Information: For further inquiries or to request an
+9.6. **Contact Information**: For further inquiries or to request an
 Extended Licence, please contact us via the [[contact
 form]{custom-style="Hyperlink"}](https://www.flexup.org/contactus).
 
 # **Annex --** Illustrative Use Cases
 
-**Section A** --- Determining Limited vs Extended Use {.Appendix-List-1}
+**Section A** --- Determining Limited vs Extended Use
 
 This Annex provides non-exhaustive examples to assist Licensees in
 determining whether their intended use qualifies as Limited or Extended
@@ -688,42 +686,42 @@ definitions and terms contained in Articles 4 and 5 of this Licence.
                                        sponsorships, or paid access).
   ---------------------------------------------------------------------------
 
-**Section B** --- Examples of FlexUp-Based Revenue {.Appendix-List-1}
+**Section B** --- Examples of FlexUp-Based Revenue
 
 FlexUp-Based Revenue **includes**, for example:
 
-9.1. Professional advisory work, (legal, accounting, tax, consulting,
-business coaching, finance, strategic planning, etc.) where the advisor
-uses, reviews, or relies upon the FlexUp App, or any FlexUp template,
-model, checklist, charter, framework, methodology or any other FlexUp
-material in the course of delivering work to a client.
+9.7. **Professional advisory work,** (legal, accounting, tax,
+consulting, business coaching, finance, strategic planning, etc.) where
+the advisor uses, reviews, or relies upon the FlexUp App, or any FlexUp
+template, model, checklist, charter, framework, methodology or any other
+FlexUp material in the course of delivering work to a client.
 
-9.2. Administrative, operational or support work, such as bookkeeping,
-accounting, corporate finance, governance, data analysis or reporting,
-where FlexUp tools (e.g., the FlexUp app, dashboards, cost models,
-process templates, etc.) are used to produce part or all of the
+9.8. **Administrative, operational or support work,** such as
+bookkeeping, accounting, corporate finance, governance, data analysis or
+reporting, where FlexUp tools (e.g., the FlexUp app, dashboards, cost
+models, process templates, etc.) are used to produce part or all of the
 deliverable.
 
-9.3. Deliverables or documents, partly or fully produced using FlexUp
-Material (e.g., charters, templates, reports, agreements, visual
+9.9. **Deliverables or documents,** partly or fully produced using
+FlexUp Material (e.g., charters, templates, reports, agreements, visual
 frameworks, canvases, etc.).
 
-9.4. Courses, trainings, webinars, workshops, or paid tutorials, that
-reference, teach or incorporates FlexUp tools, templates, methodologies
-or frameworks. This includes online courses, in-person training
-programs, corporate workshops and paid tutorials.
+9.10. **Courses, trainings, webinars, workshops, or paid tutorials,**
+that reference, teach or incorporates FlexUp tools, templates,
+methodologies or frameworks. This includes online courses, in-person
+training programs, corporate workshops and paid tutorials.
 
-9.5. Software, platforms, or dashboards, that embed or automate any
+9.11. **Software, platforms, or dashboards,** that embed or automate any
 portion of the FlexUp Model.
 
-9.6. Publications or media, whose revenue (advertising, sponsorship,
-paywall access) is linked to content based on FlexUp Material.
+9.12. **Publications or media,** whose revenue (advertising,
+sponsorship, paywall access) is linked to content based on FlexUp
+Material.
 
 FlexUp-Based Revenue **does not include** revenue from activities
 unrelated to FlexUp.
 
 **Section C** --- Examples of calculation FlexUp-Based Revenue
-{.Appendix-List-1}
 
 **Example 1 --- Percentage Attribution Within a Consulting Engagement**\
 A consultant delivers a project worth **€10,000**. They estimate that
