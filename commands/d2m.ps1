@@ -71,16 +71,30 @@ if (-not (Test-Path -LiteralPath $filterPath)) {
 $resolvedInput = Resolve-InputPath -PathValue $InputFile -DefaultExtension $defaultInputExtension
 $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $OutputFile -DefaultExtension $defaultOutputExtension
 
-& pandoc `
-  -f "docx+styles" `
-  -t "markdown+fenced_divs" `
-  --wrap=none `
-  --lua-filter="$filterPath" `
-  "$resolvedInput" `
-  -o "$resolvedOutput"
+$tempOutput = Join-Path ([System.IO.Path]::GetTempPath()) ("d2m_" + [System.Guid]::NewGuid().ToString("N") + ".md")
 
-if ($LASTEXITCODE -ne 0) {
-  exit $LASTEXITCODE
+try {
+  & pandoc `
+    -f "docx+styles" `
+    -t "markdown+fenced_divs" `
+    --wrap=none `
+    --lua-filter="$filterPath" `
+    "$resolvedInput" `
+    -o "$tempOutput"
+
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+
+  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+  $rendered = [System.IO.File]::ReadAllText($tempOutput, $utf8NoBom)
+  $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+  [System.IO.File]::WriteAllText($resolvedOutput, $rendered, $utf8Bom)
+}
+finally {
+  if (Test-Path -LiteralPath $tempOutput) {
+    Remove-Item -LiteralPath $tempOutput -Force
+  }
 }
 
 Write-Output "Created: $resolvedOutput"
