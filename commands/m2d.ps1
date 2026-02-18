@@ -123,7 +123,7 @@ function Convert-OffsetPrefixesToStyleSuffix {
       continue
     }
 
-    if ($prevBlank -and $nextBlank -and $line -match '^  (\S.*)$') {
+    if ($line -match '^  (\S.*)$') {
       $body = $Matches[1]
       $isListLike = ($body -match '^[-*+]\s') -or
         ($body -match '^\d+[.)]\s') -or
@@ -131,8 +131,9 @@ function Convert-OffsetPrefixesToStyleSuffix {
         ($body -match '^[ivxlcdmIVXLCDM]+\.\s')
       $isTableLike = $body -match '^\|'
       $isDivFence = $body -match '^:::'
+      $isHeadingLike = $body -match '^#{1,6}\s'
 
-      if (-not $isListLike -and -not $isTableLike -and -not $isDivFence) {
+      if (-not $isListLike -and -not $isTableLike -and -not $isDivFence -and -not $isHeadingLike) {
         $outLines.Add("$body {.Offset}")
         continue
       }
