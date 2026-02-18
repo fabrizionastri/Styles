@@ -28,6 +28,10 @@ local BLOCK_STYLE_SET = {
   ["Published"] = true,
 }
 
+local STYLE_CANONICAL_MAP = {
+  ["PublishedOn"] = "Published",
+}
+
 local function trim(s)
   return (s:gsub("^%s+", ""):gsub("%s+$", ""))
 end
@@ -91,13 +95,15 @@ local function get_custom_style(attr)
     return nil
   end
   if attr.attributes and attr.attributes["custom-style"] then
-    return attr.attributes["custom-style"]
+    local style = attr.attributes["custom-style"]
+    return STYLE_CANONICAL_MAP[style] or style
   end
   local kv = attr[3]
   if kv then
     for _, pair in ipairs(kv) do
       if pair[1] == "custom-style" then
-        return pair[2]
+        local style = pair[2]
+        return STYLE_CANONICAL_MAP[style] or style
       end
     end
   end

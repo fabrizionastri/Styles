@@ -10,6 +10,7 @@ local STYLE_MAP = {
   ["Heading 3"] = "Article 3",
   ["Heading 4"] = "Article 4",
   ["Heading 6"] = "Heading 4",
+  ["PublishedOn"] = "Published",
 }
 
 local function get_custom_style(attr)
