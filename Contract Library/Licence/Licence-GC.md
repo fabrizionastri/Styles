@@ -315,17 +315,12 @@ This Appendix provides non-exhaustive examples to assist Licensees in determinin
 
 FlexUp-Based Revenue **includes**, for example:
 
-### 1. **Professional advisory work,** (legal, accounting, tax, consulting, business coaching, finance, strategic planning, etc.) where the advisor uses, reviews, or relies upon the FlexUp App, or any FlexUp template, model, checklist, charter, framework, methodology or any other FlexUp material in the course of delivering work to a client.
-
-### 2. **Administrative, operational or support work,** such as bookkeeping, accounting, corporate finance, governance, data analysis or reporting, where FlexUp tools (e.g., the FlexUp app, dashboards, cost models, process templates, etc.) are used to produce part or all of the deliverable.
-
-### 3. **Deliverables or documents,** partly or fully produced using FlexUp Material (e.g., charters, templates, reports, agreements, visual frameworks, canvases, etc.).
-
-### 4. **Courses, trainings, webinars, workshops, or paid tutorials,** that reference, teach or incorporates FlexUp tools, templates, methodologies or frameworks. This includes online courses, in-person training programs, corporate workshops and paid tutorials.
-
-### 5. **Software, platforms, or dashboards,** that embed or automate any portion of the FlexUp Model.
-
-### 6. **Publications or media,** whose revenue (advertising, sponsorship, paywall access) is linked to content based on FlexUp Material.
+1.  **Professional advisory work,** (legal, accounting, tax, consulting, business coaching, finance, strategic planning, etc.) where the advisor uses, reviews, or relies upon the FlexUp App, or any FlexUp template, model, checklist, charter, framework, methodology or any other FlexUp material in the course of delivering work to a client. {.Appendix-3}
+2.  **Administrative, operational or support work,** such as bookkeeping, accounting, corporate finance, governance, data analysis or reporting, where FlexUp tools (e.g., the FlexUp app, dashboards, cost models, process templates, etc.) are used to produce part or all of the deliverable. {.Appendix-3}
+3.  **Deliverables or documents,** partly or fully produced using FlexUp Material (e.g., charters, templates, reports, agreements, visual frameworks, canvases, etc.). {.Appendix-3}
+4.  **Courses, trainings, webinars, workshops, or paid tutorials,** that reference, teach or incorporates FlexUp tools, templates, methodologies or frameworks. This includes online courses, in-person training programs, corporate workshops and paid tutorials. {.Appendix-3}
+5.  **Software, platforms, or dashboards,** that embed or automate any portion of the FlexUp Model. {.Appendix-3}
+6.  **Publications or media,** whose revenue (advertising, sponsorship, paywall access) is linked to content based on FlexUp Material. {.Appendix-3}
 
 FlexUp-Based Revenue **does not include** revenue from activities unrelated to FlexUp.
 

@@ -240,7 +240,10 @@ local function ordered_list_style(ol, state)
     return "Article 4"
   end
 
-  if list_style == "Decimal" and not state.in_appendix then
+  if list_style == "Decimal" then
+    if state.in_appendix then
+      return "Appendix 3"
+    end
     return "Article 2"
   end
 

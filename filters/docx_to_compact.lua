@@ -8,7 +8,6 @@ local HEADING_STYLE_MAP = {
   ["Article 1"] = { level = 3, prefix = "Article ", counter = "decimal" },
   ["Appendix 1"] = { level = 1, prefix = "Appendix ", counter = "decimal" },
   ["Appendix 2"] = { level = 2, prefix = "Section ", counter = "alpha_upper" },
-  ["Appendix 3"] = { level = 3, prefix = "", counter = "decimal" },
 }
 
 local UNWRAP_STYLE_SET = {
