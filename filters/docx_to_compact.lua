@@ -24,6 +24,11 @@ local UNWRAP_STYLE_SET = {
   ["footnote text"] = true,
 }
 
+local BLOCK_STYLE_SET = {
+  ["Comments"] = true,
+  ["Published"] = true,
+}
+
 local function trim(s)
   return (s:gsub("^%s+", ""):gsub("%s+$", ""))
 end
@@ -144,6 +149,8 @@ local function clean_inlines(inlines, state, convert_blocks)
     elseif inl.t == "Note" then
       local note_blocks = convert_blocks(inl.content, state)
       out:insert(pandoc.Note(note_blocks))
+    elseif inl.t == "SoftBreak" or inl.t == "LineBreak" then
+      out:insert(pandoc.Space())
     else
       out:insert(inl)
     end
@@ -190,6 +197,7 @@ local function inlines_to_markdown_line(inlines)
   local txt = pandoc.write(tmp_doc, "markdown")
   txt = txt:gsub("\r\n", "\n")
   txt = trim(txt:gsub("\n+$", ""))
+  txt = txt:gsub("%s*\n%s*", " ")
   return txt
 end
 
@@ -203,6 +211,31 @@ local function split_lines(text)
     lines[#lines + 1] = line
   end
   return lines
+end
+
+local function style_block_div(style_name, content)
+  return pandoc.Div(content, pandoc.Attr("", { style_to_alias(style_name) }, {}))
+end
+
+local function render_offset_style(content_blocks)
+  local lines = {}
+
+  for _, block in ipairs(content_blocks) do
+    if block.t == "Para" or block.t == "Plain" then
+      lines[#lines + 1] = "  " .. inlines_to_markdown_line(block.content)
+      lines[#lines + 1] = ""
+    end
+  end
+
+  while #lines > 0 and lines[#lines] == "" do
+    table.remove(lines)
+  end
+
+  if #lines == 0 then
+    return pandoc.List:new()
+  end
+
+  return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
 end
 
 local function bullet_level_from_style(style_name)
@@ -317,9 +350,12 @@ local function convert_blocks(blocks, state)
       return pandoc.List:new()
     end
 
-    if style == "Comments" or style == "Published" then
-      local inlines = extract_primary_inlines(converted_content)
-      return pandoc.Para(append_suffix_class(inlines, style_to_alias(style)))
+    if style == "Offset" then
+      return render_offset_style(converted_content)
+    end
+
+    if BLOCK_STYLE_SET[style] then
+      return style_block_div(style, converted_content)
     end
 
     if UNWRAP_STYLE_SET[style] then
@@ -526,8 +562,72 @@ local function convert_blocks(blocks, state)
   return out
 end
 
+local function block_style_from_div(div)
+  if div.t ~= "Div" then
+    return nil
+  end
+
+  local style = get_custom_style(div.attr)
+  if style and BLOCK_STYLE_SET[style] then
+    return style
+  end
+
+  if div.attr and div.attr.classes then
+    for _, class_name in ipairs(div.attr.classes) do
+      local mapped = class_name:gsub("-", " ")
+      if BLOCK_STYLE_SET[mapped] then
+        return mapped
+      end
+    end
+  end
+
+  return nil
+end
+
+local function merge_adjacent_style_divs(blocks)
+  local out = pandoc.List:new()
+  local pending = nil
+  local pending_style = nil
+
+  local function flush_pending()
+    if pending then
+      out:insert(pending)
+      pending = nil
+      pending_style = nil
+    end
+  end
+
+  for _, block in ipairs(blocks) do
+    if block.t == "Div" then
+      block.content = merge_adjacent_style_divs(block.content)
+      local style = block_style_from_div(block)
+      if style then
+        if pending and pending_style == style then
+          for _, inner in ipairs(block.content) do
+            pending.content:insert(inner)
+          end
+        else
+          flush_pending()
+          pending = block
+          pending_style = style
+        end
+      else
+        flush_pending()
+        out:insert(block)
+      end
+    else
+      flush_pending()
+      out:insert(block)
+    end
+  end
+
+  flush_pending()
+  return out
+end
+
 function Pandoc(doc)
   local state = { in_appendix = false }
   local blocks = convert_blocks(doc.blocks, state)
+  blocks = merge_adjacent_style_divs(blocks)
   return pandoc.Pandoc(blocks, doc.meta)
 end

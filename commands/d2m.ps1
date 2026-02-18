@@ -73,7 +73,8 @@ $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $Outp
 
 & pandoc `
   -f "docx+styles" `
-  -t "markdown" `
+  -t "markdown+fenced_divs" `
+  --wrap=none `
   --lua-filter="$filterPath" `
   "$resolvedInput" `
   -o "$resolvedOutput"

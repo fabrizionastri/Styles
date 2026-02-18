@@ -5,6 +5,7 @@ local utils = pandoc.utils
 
 local ALIAS_TO_STYLE = {
   ["Comments"] = "Comments",
+  ["Offset"] = "Offset",
   ["Published"] = "Published",
   ["List"] = "List",
   ["List-2"] = "List 2",

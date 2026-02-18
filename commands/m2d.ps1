@@ -61,6 +61,67 @@ function Resolve-OutputPath {
   return $OutputPath
 }
 
+function Convert-OffsetPrefixesToStyleSuffix {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$InputPath
+  )
+
+  $raw = Get-Content -LiteralPath $InputPath -Raw -ErrorAction Stop
+  $normalized = $raw -replace "`r`n", "`n"
+  $lines = $normalized -split "`n", -1
+  $outLines = New-Object 'System.Collections.Generic.List[string]'
+
+  $inFence = $false
+  $fenceChar = ""
+
+  for ($i = 0; $i -lt $lines.Length; $i++) {
+    $line = $lines[$i]
+
+    if ($line -match '^\s*(```+|~~~+)') {
+      $token = $Matches[1]
+      $char = $token.Substring(0, 1)
+      if (-not $inFence) {
+        $inFence = $true
+        $fenceChar = $char
+      }
+      elseif ($fenceChar -eq $char) {
+        $inFence = $false
+        $fenceChar = ""
+      }
+      $outLines.Add($line)
+      continue
+    }
+
+    if ($inFence) {
+      $outLines.Add($line)
+      continue
+    }
+
+    $prevBlank = ($i -eq 0) -or [string]::IsNullOrWhiteSpace($lines[$i - 1])
+    $nextBlank = ($i -eq ($lines.Length - 1)) -or [string]::IsNullOrWhiteSpace($lines[$i + 1])
+
+    if ($prevBlank -and $nextBlank -and $line -match '^  (\S.*)$') {
+      $body = $Matches[1]
+      $isListLike = ($body -match '^[-*+]\s') -or
+        ($body -match '^\d+[.)]\s') -or
+        ($body -match '^[A-Za-z][.)]\s') -or
+        ($body -match '^[ivxlcdmIVXLCDM]+\.\s')
+      $isTableLike = $body -match '^\|'
+      $isDivFence = $body -match '^:::'
+
+      if (-not $isListLike -and -not $isTableLike -and -not $isDivFence) {
+        $outLines.Add("$body {.Offset}")
+        continue
+      }
+    }
+
+    $outLines.Add($line)
+  }
+
+  return ($outLines -join "`n")
+}
+
 if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) {
   throw "Pandoc is not installed or not in PATH."
 }
@@ -76,14 +137,25 @@ if (-not (Test-Path -LiteralPath $referenceDoc)) {
 $resolvedInput = Resolve-InputPath -PathValue $InputFile -DefaultExtension $defaultInputExtension
 $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $OutputFile -DefaultExtension $defaultOutputExtension
 
-& pandoc `
-  -f "markdown+fancy_lists+lists_without_preceding_blankline" `
-  -t "docx" `
-  --no-highlight `
-  --reference-doc="$referenceDoc" `
-  --lua-filter="$filterPath" `
-  "$resolvedInput" `
-  -o "$resolvedOutput"
+$preparedMarkdown = Convert-OffsetPrefixesToStyleSuffix -InputPath $resolvedInput
+$tempInput = Join-Path ([System.IO.Path]::GetTempPath()) ("m2d_" + [System.Guid]::NewGuid().ToString("N") + ".md")
+Set-Content -LiteralPath $tempInput -Value $preparedMarkdown -NoNewline -Encoding utf8
+
+try {
+  & pandoc `
+    -f "markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs" `
+    -t "docx" `
+    --no-highlight `
+    --reference-doc="$referenceDoc" `
+    --lua-filter="$filterPath" `
+    "$tempInput" `
+    -o "$resolvedOutput"
+}
+finally {
+  if (Test-Path -LiteralPath $tempInput) {
+    Remove-Item -LiteralPath $tempInput -Force
+  }
+}
 
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
