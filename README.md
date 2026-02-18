@@ -1,19 +1,42 @@
-# FlexUp Contract Toolbox
+# FlexUp Contract Commons
 
-## Why this toolbox?
+Open contract templates and conversion tools for working between Word (`.docx`) and Markdown (`.md`).
 
-We currently manage a dozen contract templates, and we are already using AI to update them and to ensure coherence across different templates. In the near future, we will be creating and managing hundreds of templates in different languages. To do this efficiently at scale, we need a better way to work with AI and to compare different versions of our documents.
+## Why this project?
 
-AI tools work much better with Markdown (.md) files than with Word (.docx) files. Markdown files are also much easier to compare side-by-side using tools like [VS Code](https://code.visualstudio.com/download) or [Beyond Compare](https://www.scootersoftware.com/download), which makes reviewing changes across templates far more practical.
+This repository has two goals:
 
-This toolbox lets you convert freely between Word and Markdown:
+1. Build and maintain an open contract library that anyone can use and improve.
+2. Provide reliable conversion tools so contracts can move between Word and Markdown without losing structure and style.
+
+Markdown works well for AI-assisted drafting, versioning, and diff review, while Word remains the most practical format for legal editing and final review. This toolbox keeps both workflows connected.
+
+## Licence and use
+
+The contract library and related materials are published under the **FlexUp Licence**. See `licence.md` for the full terms.
+
+## Contributions welcome
+
+This is a public repository, and contributions are encouraged.
+
+You can contribute by:
+
+- adding new contract templates
+- improving existing clauses and template quality
+- adding translations / jurisdiction variants
+- improving conversion reliability (`docx <-> md`)
+- improving filters, scripts, tests, and documentation
+
+## What this toolbox does
+
+It converts freely between Word and Markdown:
 
 - **Word to Markdown** -- so you can feed the document to AI tools or compare versions
 - **Markdown to Word** -- so you can get back a properly formatted Word document
 
-To make these conversions reliable, we have redesigned the full set of Word styles. This means that for our existing (legacy) contracts, we first need to convert them to the new Word style set, verify the result in Word, and only then convert them to Markdown.
+For legacy contracts, first remap old Word styles to the new style set, verify in Word, then convert to Markdown.
 
----
+
 
 ## Quick start
 
@@ -72,7 +95,7 @@ ld2d "Old Contract.docx" "New Contract"
 
 You don't need to type the file extension -- the commands will add `.docx` or `.md` automatically if you leave it out.
 
----
+
 
 ## Recommended workflow
 
@@ -98,7 +121,7 @@ m2d "My Contract.md"
 
 To compare two versions of a document, convert both to Markdown and use a comparison tool such as VS Code (free) or Beyond Compare. Markdown files make differences between versions immediately visible, which is very useful for reviewing changes across multiple templates.
 
----
+
 
 ## Handling legacy contracts
 
@@ -119,7 +142,7 @@ Existing contracts that were created before the new style set need to be convert
 
 4. From this point forward, you can edit the Markdown or the Word version and convert between them freely using `d2m` and `m2d`.
 
----
+
 
 ## Troubleshooting
 
@@ -132,9 +155,9 @@ The commands are not loaded. Either run `install_commands.ps1` again (see Step 2
 **"Input file not found"**
 Check that the file name is correct and that you are in the right folder. Use `dir` to list the files in the current folder. If the file name contains spaces, make sure to wrap it in quotes: `d2m "My Contract.docx"`.
 
----
 
----
+
+
 
 # Technical Reference
 
