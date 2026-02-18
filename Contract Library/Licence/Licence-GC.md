@@ -27,9 +27,9 @@ Making money ANY other way? → Extended (royalty on FlexUp-Based Revenues)
 1.4. The FlexUp Licence reflects FlexUp's commitment to openness, collaboration and fairness.
 
   It allows free circulation, adaptation and redistribution of the Licensed Material, provided that:
-a) Proper attribution to FlexUp is maintained;
-b) Redistributions remain free of charge and under equivalent licence terms; and
-c) Where commercial benefit is obtained from the use of FlexUp IP, a fair contribution is made to FlexUp in accordance with the principles of the Licence and the subsequent articles.
+  a) Proper attribution to FlexUp is maintained;
+  b) Redistributions remain free of charge and under equivalent licence terms; and
+  c) Where commercial benefit is obtained from the use of FlexUp IP, a fair contribution is made to FlexUp in accordance with the principles of the Licence and the subsequent articles.
 
 1.5. While the Licence is automatically binding upon first use of the Licensed Material, Licensees shall endeavour, as soon as possible, to formalise a Licence Special Conditions (**Licence-SC**) that identify the Parties and, in particular when clarity is required regarding commercial terms that may modify or supplement certain provisions of these General Conditions.
 
@@ -70,52 +70,52 @@ c) Where commercial benefit is obtained from the use of FlexUp IP, a fair contri
 
 4.1. The Licence comes in two forms, depending on the Licensee's effective use of the Licensed Material:
 
-a) **Limited Licence**: The Limited Licence grants the Licensee permission to use the Licensed Material strictly within the scope of Limited Use as defined in Article 5.1. The Limited Licence is automatically formed when a Licensee uses the Licensed Material and is free of charge.
-b) **Extended Licence**: The Extended Licence is required to use the Licensed Material for Extended Use as defined in Article 5.2.
+  a) **Limited Licence**: The Limited Licence grants the Licensee permission to use the Licensed Material strictly within the scope of Limited Use as defined in Article 5.1. The Limited Licence is automatically formed when a Licensee uses the Licensed Material and is free of charge.
+  b) **Extended Licence**: The Extended Licence is required to use the Licensed Material for Extended Use as defined in Article 5.2.
 
 4.2. The Extended Licence may be acquired as follows:
 
-a) **Automatic Upgrade Clause**: If the Licensee's use evolves and triggers any of the conditions mentioned in Article 5.2, the Limited Licence automatically converts to an Extended Licence as of the trigger date, and the obligations under Article 8.1 (Fees and Royalties) immediately apply. The Licensee shall notify FlexUp within 30 days of the trigger event.
-b) **Manual Upgrade:** You may also request an Extended Licence at any time; such request does not waive any Automatic Upgrade already triggered.
+  a) **Automatic Upgrade Clause**: If the Licensee's use evolves and triggers any of the conditions mentioned in Article 5.2, the Limited Licence automatically converts to an Extended Licence as of the trigger date, and the obligations under Article 8.1 (Fees and Royalties) immediately apply. The Licensee shall notify FlexUp within 30 days of the trigger event.
+  b) **Manual Upgrade:** You may also request an Extended Licence at any time; such request does not waive any Automatic Upgrade already triggered.
 
 ### Article 5. Scope and Tiers of Use
 
 5.1. **Limited Use Licence Scope**
 
   The Limited Licence grants a Licensee the right to use the Licensed Material for personal or internal purposes only within the limits set out below. Any use not expressly permitted herein falls outside the scope of this Limited Licence:
-a) For transactions (i.e., contracts, orders) to which the Licensee is a direct party;
-b) To structure or manage a single project or business in which the Licensee holds a key position (e.g., owner, director, majority shareholder);
-c) For internal use within a single organization or company, as the Licensee, including use by its officers, employees and authorised agents acting strictly on its behalf. Such use shall not extend to affiliates, subsidiaries, or third parties;
-d) For paid professional advisors (such as lawyers, accountants, or consultants) to provide advice related to the Licensed Material **to one (1) single client**, within any continuous twelve (12) month period;
-e) For **non-commercial**, personal educational or testing purposes;
-f) Republishing, translating, or adapting the Licensed Material for external distribution, provided that such use is non-commercial, includes proper attribution to FlexUp, and remains under the same FlexUp Licence. If any revenue or other financial benefit is generated from such distribution, whether direct or indirect, and regardless of the monetisation mechanism (including but not limited to advertising, sponsorship, paid access, affiliate or referral fees, commissions or donations), it shall be deemed Extended Use pursuant to Article 5.2, and the royalty provisions of shall apply.
+  a) For transactions (i.e., contracts, orders) to which the Licensee is a direct party;
+  b) To structure or manage a single project or business in which the Licensee holds a key position (e.g., owner, director, majority shareholder);
+  c) For internal use within a single organization or company, as the Licensee, including use by its officers, employees and authorised agents acting strictly on its behalf. Such use shall not extend to affiliates, subsidiaries, or third parties;
+  d) For paid professional advisors (such as lawyers, accountants, or consultants) to provide advice related to the Licensed Material **to one (1) single client**, within any continuous twelve (12) month period;
+  e) For **non-commercial**, personal educational or testing purposes;
+  f) Republishing, translating, or adapting the Licensed Material for external distribution, provided that such use is non-commercial, includes proper attribution to FlexUp, and remains under the same FlexUp Licence. If any revenue or other financial benefit is generated from such distribution, whether direct or indirect, and regardless of the monetisation mechanism (including but not limited to advertising, sponsorship, paid access, affiliate or referral fees, commissions or donations), it shall be deemed Extended Use pursuant to Article 5.2, and the royalty provisions of shall apply.
 
 5.2. **Extended Use Licence Scope**
 
   The Extended Use Licence automatically applies to any activity exceeding the Limited Use Licence, including but not limited to:
-a) **Multiple Client** **Engagements**: Providing paid professional or consulting services using or referencing the Licensed Material to more than one (1) client within any rolling 12-month period or incorporating the FlexUp Model into paid professional activity;
-b) **Public Marketing**: Using the \"FlexUp\" name, logo, or related trademarks in any public-facing materials (such as a website, social media profile, advertisement, etc.) to promote or solicit paid professional services;
-c) **Derivative Distribution**: The Licensee translates, modifies, or re-packages the Licensed Material and distributes it (whether free or paid);
-d) **Integration**: Integration into tools or systems for third parties.
-e) **Monetised Activities**: Any Monetised Activity constitutes Extended Use, except professional advisory to a single client as permitted under Article 5.1.d.
+  a) **Multiple Client** **Engagements**: Providing paid professional or consulting services using or referencing the Licensed Material to more than one (1) client within any rolling 12-month period or incorporating the FlexUp Model into paid professional activity;
+  b) **Public Marketing**: Using the \"FlexUp\" name, logo, or related trademarks in any public-facing materials (such as a website, social media profile, advertisement, etc.) to promote or solicit paid professional services;
+  c) **Derivative Distribution**: The Licensee translates, modifies, or re-packages the Licensed Material and distributes it (whether free or paid);
+  d) **Integration**: Integration into tools or systems for third parties.
+  e) **Monetised Activities**: Any Monetised Activity constitutes Extended Use, except professional advisory to a single client as permitted under Article 5.1.d.
   Extended Use does not automatically imply that a Royalty Fee is due; Royalty is owed only when the Licensee generates Revenue Attributable to FlexUp pursuant to Article 8.
 
 ### Article 6. General restrictions
 
 6.1. The following General restrictions are applicable to all licences:
 
-a) Reverse-engineer, decompile, disassemble, or otherwise attempt to drive the source code, data structures, or algorithms underlying the FlexUp Platform or Model;
-b) Create, market, or operate any model, application, or service that is represented, promoted, or passed off as FlexUp, or as being officially endorsed or certified by FlexUp, unless expressly authorised;
-c) Remove, alter, or obscure any trademark, logo, copyrights notice, or attribution appearing on or within the Licensed Material;
-d) Engage in any other activity that constitutes misuse, infringes third-party rights, or is inconsistent or improper with the intended fair use of this Licence.
+  a) Reverse-engineer, decompile, disassemble, or otherwise attempt to drive the source code, data structures, or algorithms underlying the FlexUp Platform or Model;
+  b) Create, market, or operate any model, application, or service that is represented, promoted, or passed off as FlexUp, or as being officially endorsed or certified by FlexUp, unless expressly authorised;
+  c) Remove, alter, or obscure any trademark, logo, copyrights notice, or attribution appearing on or within the Licensed Material;
+  d) Engage in any other activity that constitutes misuse, infringes third-party rights, or is inconsistent or improper with the intended fair use of this Licence.
 
 6.2. The following activities require prior written authorisation from FlexUp, unless expressly permitted under the Extended Licence:
 
-a) Granting any sublicense, assignment, or other transfer of rights under this Licence;
-b) Using the FlexUp name, logo, or marks in a way that suggests endorsement, partnership, certification, or affiliation;
-c) Operating a multi-tenant or publicly accessible digital platform that incorporates the FlexUp Model ("**Platform Use**"), unless otherwise agreed in writing;
-d) Participating in the FlexUp Partner / Franchise Program, which always requires a separate written agreement;
-e) Incorporating the Licensed Material into tools, apps, training materials, or other deliverables for third parties.
+  a) Granting any sublicense, assignment, or other transfer of rights under this Licence;
+  b) Using the FlexUp name, logo, or marks in a way that suggests endorsement, partnership, certification, or affiliation;
+  c) Operating a multi-tenant or publicly accessible digital platform that incorporates the FlexUp Model ("**Platform Use**"), unless otherwise agreed in writing;
+  d) Participating in the FlexUp Partner / Franchise Program, which always requires a separate written agreement;
+  e) Incorporating the Licensed Material into tools, apps, training materials, or other deliverables for third parties.
 
 ### Article 7. Extended Licence Obligations
 
@@ -128,9 +128,9 @@ This article applies only to Extended Use Licensees.
 7.2. **Failure to declare Extended Use**
 
   Failure by the Licensee to declare any Extended Use, or to report and remit royalties within the required timeframe, shall constitute a material breach of this Licence and shall trigger the following consequences:
-a) Immediate conversion of the Limited Use Licence to the Extended Use Licence;
-b) Payment of all applicable royalties retroactively from the first day of *effective* Extended Use; and
-c) Application of a late payment penalty of twenty per cent (20%) on any overdue royalties.
+  a) Immediate conversion of the Limited Use Licence to the Extended Use Licence;
+  b) Payment of all applicable royalties retroactively from the first day of *effective* Extended Use; and
+  c) Application of a late payment penalty of twenty per cent (20%) on any overdue royalties.
 
 7.3. FlexUp reserves the right to seek compensation for any further losses or damages suffered as a result of such breach, including, without limitation, any loss of commercial opportunity, competitive disadvantage, and harm to its reputation or expenses incurred in connection with the breach or its enforcement.
 
@@ -138,22 +138,22 @@ c) Application of a late payment penalty of twenty per cent (20%) on any overdue
 
 8.1. **Royalty Fee**
 
-a) In consideration for the rights granted under the Extended Licence, the Licensee shall pay to FlexUp a royalty fee of **ten percent (10%)** of the FlexUp-Based Revenue.
-b) FlexUp-Based Revenue includes revenue derived from any professional activity in which the Licensed Material is used, referenced, implemented, or relied upon, even if the Licensed Material represents only a portion of the total value delivered.
+  a) In consideration for the rights granted under the Extended Licence, the Licensee shall pay to FlexUp a royalty fee of **ten percent (10%)** of the FlexUp-Based Revenue.
+  b) FlexUp-Based Revenue includes revenue derived from any professional activity in which the Licensed Material is used, referenced, implemented, or relied upon, even if the Licensed Material represents only a portion of the total value delivered.
 
 8.2. **Reporting and Payment**
 
-a) The Licensee shall provide FlexUp with a quarterly report detailing all gross revenue subject to the Royalty Fee through any means or channels made available by FlexUp, within thirty (30) days of the end of each calendar quarter.
-b) Upon receipt of such report, FlexUp shall issue a Proforma Accounting Document to the Licensee. The Licensee agrees to pay the full invoiced amount via bank transfer.
-c) If the invoice is received by the Licensee before the 15th of a given month, payment is due at the end of that same month. If the invoice is received after the 15th of a given month, payment is due at the end of the following month.
-d) De minimis rule: Where FlexUp-Based Revenue arising from a given activity is less than 1 000 € per calendar quarter, such revenue shall be reported on an annual basis only, and only give rise to a royalty payment if the royalty due is equal or greater to 100 € per calendar year.
+  a) The Licensee shall provide FlexUp with a quarterly report detailing all gross revenue subject to the Royalty Fee through any means or channels made available by FlexUp, within thirty (30) days of the end of each calendar quarter.
+  b) Upon receipt of such report, FlexUp shall issue a Proforma Accounting Document to the Licensee. The Licensee agrees to pay the full invoiced amount via bank transfer.
+  c) If the invoice is received by the Licensee before the 15th of a given month, payment is due at the end of that same month. If the invoice is received after the 15th of a given month, payment is due at the end of the following month.
+  d) De minimis rule: Where FlexUp-Based Revenue arising from a given activity is less than 1 000 € per calendar quarter, such revenue shall be reported on an annual basis only, and only give rise to a royalty payment if the royalty due is equal or greater to 100 € per calendar year.
 
 8.3. **Late payment**
 
   In case of failure to pay by the due date, the Licensee shall automatically incur late payment penalties on the overdue amount, without prejudice to FlexUp's other rights or remedies:
-a) A fixed charge of ten percent (10%) of the overdue amount plus interest accruing daily at an annual rate of five percent (5%) from the due date until full payment; and
-b) If the Licensee still fails to pay within fifteen (15) days after receipt of a written request from FlexUp, then an additional penalty of ten percent (10%) of the overdue amount plus interest accruing daily at an annual rate of ten percent (10%).
-c) FlexUp may at its own discretion and without prejudice to any other rights or remedies suspend further provision of services until payment in full is received or terminate this agreement.
+  a) A fixed charge of ten percent (10%) of the overdue amount plus interest accruing daily at an annual rate of five percent (5%) from the due date until full payment; and
+  b) If the Licensee still fails to pay within fifteen (15) days after receipt of a written request from FlexUp, then an additional penalty of ten percent (10%) of the overdue amount plus interest accruing daily at an annual rate of ten percent (10%).
+  c) FlexUp may at its own discretion and without prejudice to any other rights or remedies suspend further provision of services until payment in full is received or terminate this agreement.
 
 ### Article 9. Flexibility and Good-Faith Adjustment
 
@@ -225,47 +225,47 @@ By using the Licensed Material, the Licensees acknowledge the following:
 
 14.1. **Definitions for This Article**: For the purposes of this Article, the following definitions apply:
 
-a) \"**Expire**\" or \"**Expiry**\" refers to the natural cessation of the Extended Licence upon reaching a pre-defined Expiry Date.
-b) \"**Cancel**\" or \"**Cancellation**\" means the early cessation of the Licence by either Party in accordance with the terms of this Article.
-c) \"**Termination**\" refers to the cessation of the Licence for any reason, whether by Expiry or Cancellation
+  a) \"**Expire**\" or \"**Expiry**\" refers to the natural cessation of the Extended Licence upon reaching a pre-defined Expiry Date.
+  b) \"**Cancel**\" or \"**Cancellation**\" means the early cessation of the Licence by either Party in accordance with the terms of this Article.
+  c) \"**Termination**\" refers to the cessation of the Licence for any reason, whether by Expiry or Cancellation
 
 14.2. **Effective Date**: The Licence becomes effective as follows:
 
-a) **Limited Licence**: The Limited Licence is automatically formed and becomes effective upon the Licensee\'s first use of any Licensed Material.
-b) **Extended Licence**: The Extended Licence becomes effective on the date on which the Licensee formally request the Extended Licence; or on the date on which any of the triggering events described in Article 5.2
+  a) **Limited Licence**: The Limited Licence is automatically formed and becomes effective upon the Licensee\'s first use of any Licensed Material.
+  b) **Extended Licence**: The Extended Licence becomes effective on the date on which the Licensee formally request the Extended Licence; or on the date on which any of the triggering events described in Article 5.2
 
 14.3. **Duration**
 
-a) **Limited Licence**: The Limited Licence is granted for an indefinite duration and shall continue until it is terminated by either Party in accordance with this Article.
-b) **Extended Licence**: The Extended Licence is granted for an indefinite duration and shall continue until it is terminated by either Party in accordance with this Article
+  a) **Limited Licence**: The Limited Licence is granted for an indefinite duration and shall continue until it is terminated by either Party in accordance with this Article.
+  b) **Extended Licence**: The Extended Licence is granted for an indefinite duration and shall continue until it is terminated by either Party in accordance with this Article
 
 14.4. **Termination by the Licensee**
 
-a) **Limited Licence**: Licensee may terminate the Limited Licence at any time and for any reason by ceasing all use of the Licensed Material and destroying all copies in their possession or control.
-b) **Extended Licence**: Licensee may terminate the Extended Licence at any time and for any reason by providing FlexUp within thirty (30) days' prior written notice.
+  a) **Limited Licence**: Licensee may terminate the Limited Licence at any time and for any reason by ceasing all use of the Licensed Material and destroying all copies in their possession or control.
+  b) **Extended Licence**: Licensee may terminate the Extended Licence at any time and for any reason by providing FlexUp within thirty (30) days' prior written notice.
 
 14.5. **Termination by FlexUp**
 
   FlexUp may terminate this Licence immediately without prior notice if the Licensee:
-a) Breaches any provision of this Licence, including use for Extended Purposes without an Extended Licence, failure to attribute or unauthorised distribution;
-b) Infringes or misuses FlexUp intellectual property, trademarks or copyrights;
-c) Engages in any conduct that, in FlexUp's reasonable opinion, damages its reputation or the integrity of the Licensed Material;
-d) Becomes insolvent, files for bankruptcy or ceases business operations; or
-e) Uses the Licensed Material for any illegal or unethical purpose.
+  a) Breaches any provision of this Licence, including use for Extended Purposes without an Extended Licence, failure to attribute or unauthorised distribution;
+  b) Infringes or misuses FlexUp intellectual property, trademarks or copyrights;
+  c) Engages in any conduct that, in FlexUp's reasonable opinion, damages its reputation or the integrity of the Licensed Material;
+  d) Becomes insolvent, files for bankruptcy or ceases business operations; or
+  e) Uses the Licensed Material for any illegal or unethical purpose.
 
 14.6. **Effect of Termination**: Upon termination of this Licence:
 
-a) The Licensee shall immediately cease all use of the Licensed Material.
-b) The Licensee must destroy all copies of the Licensed Material in their possession except those already incorporated into executed contracts or documents to which the Licensee is a party.
-c) All rights granted to the Licensee under this Licence shall immediately terminate.
-d) The Licensee must, upon request from FlexUp, certify in writing that they have complied with the obligations in this section.
-e) Pay to FlexUp all outstanding Royalties, Fees or other amounts due under this Licence, including any accrued interest or surcharges applicable at the date of termination.
+  a) The Licensee shall immediately cease all use of the Licensed Material.
+  b) The Licensee must destroy all copies of the Licensed Material in their possession except those already incorporated into executed contracts or documents to which the Licensee is a party.
+  c) All rights granted to the Licensee under this Licence shall immediately terminate.
+  d) The Licensee must, upon request from FlexUp, certify in writing that they have complied with the obligations in this section.
+  e) Pay to FlexUp all outstanding Royalties, Fees or other amounts due under this Licence, including any accrued interest or surcharges applicable at the date of termination.
 
 14.7. **Survival**: The following Articles of this Licence shall survive any termination:
 
-a) Article 11 (Trademarks)
-b) Article 12 (Disclaimers and Limitations)
-c) Any other provisions which expressly or by implication are intended to continue in force after termination, including but not limited to clauses relating to intellectual property right, confidentiality, payment, and limitation of liability.
+  a) Article 11 (Trademarks)
+  b) Article 12 (Disclaimers and Limitations)
+  c) Any other provisions which expressly or by implication are intended to continue in force after termination, including but not limited to clauses relating to intellectual property right, confidentiality, payment, and limitation of liability.
 
 14.8. **Reinstatement**: FlexUp may, at its sole discretion, reinstate the Licence if the Licensee remedies any breach to FlexUp\'s satisfaction. Any reinstatement may be subject to additional terms and conditions as specified by FlexUp.
 
@@ -331,8 +331,7 @@ FlexUp-Based Revenue **does not include** revenue from activities unrelated to F
 
 ## Section C. Examples of calculation FlexUp-Based Revenue
 
-### 1. **Example 1** --- Percentage Attribution Within a Consulting Engagement
-
+- **Example 1** --- Percentage Attribution Within a Consulting Engagement
   - A consultant delivers a project worth **€10,000**. They estimate that portion of the advisory services related to implementing FlexUp account for **20%** of the value provided; the remaining 80% relates to unrelated advisory work (such as market research on the client's products).
   - FlexUp-Based Revenue = 10 000 € × 20% = **2 000**
   - Royalty due = 10% × 2 000 € = **200 €**

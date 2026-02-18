@@ -98,8 +98,30 @@ function Convert-OffsetPrefixesToStyleSuffix {
       continue
     }
 
+    # Indented article markers should remain semantic list markers, not code blocks.
+    if ($line -match '^    ([ivxlcdmIVXLCDM]+\.\s+.+)$') {
+      $outLines.Add($Matches[1])
+      continue
+    }
+
+    if ($line -match '^  ([A-Za-z]\)\s+.+)$') {
+      $outLines.Add($Matches[1])
+      continue
+    }
+
     $prevBlank = ($i -eq 0) -or [string]::IsNullOrWhiteSpace($lines[$i - 1])
     $nextBlank = ($i -eq ($lines.Length - 1)) -or [string]::IsNullOrWhiteSpace($lines[$i + 1])
+
+    # Standalone indented bullets map explicitly to List 2 / List 3.
+    if ($prevBlank -and $line -match '^  -\s+(.+)$') {
+      $outLines.Add("- $($Matches[1]) {.List-2}")
+      continue
+    }
+
+    if ($prevBlank -and $line -match '^    -\s+(.+)$') {
+      $outLines.Add("- $($Matches[1]) {.List-3}")
+      continue
+    }
 
     if ($prevBlank -and $nextBlank -and $line -match '^  (\S.*)$') {
       $body = $Matches[1]

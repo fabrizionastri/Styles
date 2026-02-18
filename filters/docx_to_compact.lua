@@ -316,7 +316,13 @@ end
 
 local function render_ordered_items(items, level, list_style, start)
   local lines = {}
-  local indent = string.rep(" ", (level - 1) * 4)
+  local indent_width = (level - 1) * 4
+  if list_style == "LowerAlpha" then
+    indent_width = 2
+  elseif list_style == "LowerRoman" then
+    indent_width = 4
+  end
+  local indent = string.rep(" ", indent_width)
 
   for i, item in ipairs(items) do
     local n = (start or 1) + (i - 1)
@@ -336,7 +342,15 @@ local function render_ordered_items(items, level, list_style, start)
       elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
         local prefix = string.rep(" ", level * 4)
         for _, line in ipairs(split_lines(b.text or b.c or "")) do
-          lines[#lines + 1] = prefix .. line
+          local is_already_structured = line:match("^%s*%-%s")
+            or line:match("^%s*[A-Za-z]%)%s")
+            or line:match("^%s*[ivxlcdmIVXLCDM]+%.%s")
+            or line:match("^%s*%d+%.%d+%.?%s")
+          if is_already_structured then
+            lines[#lines + 1] = line
+          else
+            lines[#lines + 1] = prefix .. line
+          end
         end
       end
     end
