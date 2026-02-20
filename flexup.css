@@ -1,0 +1,441 @@
+/*
+  FlexUp contract stylesheet for Markdown/HTML rendering.
+  Source of truth: styles/style_guide.md and styles/style_matrix.md
+
+  Notes:
+  - Automatic numbering relies on semantic classes in HTML output:
+    .Section, .Article-1, .Article-2, .Article-3, .Article-4,
+    .Appendix-1, .Appendix-2, .Appendix-3, .Appendix-4, .Appendix-5.
+  - Works best with Pandoc-generated HTML from Markdown using attribute classes.
+*/
+
+:root {
+  --fx-font-main: "Open Sans", "Segoe UI", Arial, sans-serif;
+  --fx-font-size-main: 10pt;
+
+  --fx-color-text: #111;
+  --fx-color-background: #fff;
+  --fx-color-link: #0563c1;
+  --fx-color-comments: #00b050;
+  --fx-color-table-head: #f2f2f2;
+  --fx-color-border: #000;
+
+  --fx-space-xs: 3pt;
+  --fx-space-sm: 6pt;
+  --fx-space-md: 12pt;
+  --fx-space-lg: 18pt;
+  --fx-space-xl: 24pt;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--fx-font-main);
+  font-size: var(--fx-font-size-main);
+  line-height: 1.05;
+  color: var(--fx-color-text);
+  background: var(--fx-color-background);
+}
+
+a {
+  color: var(--fx-color-link);
+  text-decoration: underline;
+}
+
+/* Default paragraph style (Normal) */
+p {
+  margin-top: var(--fx-space-sm);
+  margin-bottom: var(--fx-space-xs);
+  text-align: justify;
+}
+
+/* Plain headings (unnumbered) */
+h1 {
+  font-size: 14pt;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid var(--fx-color-border);
+  margin-top: 0;
+  margin-bottom: var(--fx-space-md);
+  padding-bottom: 2pt;
+}
+
+h2 {
+  font-size: 12pt;
+  font-weight: 700;
+  text-decoration: underline;
+  text-align: left;
+  margin-top: var(--fx-space-xl);
+  margin-bottom: var(--fx-space-sm);
+}
+
+h3 {
+  font-size: 11pt;
+  font-weight: 700;
+  text-align: left;
+  margin-top: var(--fx-space-lg);
+  margin-bottom: var(--fx-space-sm);
+}
+
+h4 {
+  font-size: 10pt;
+  font-weight: 400;
+  text-decoration: underline;
+  text-align: left;
+  margin-top: var(--fx-space-md);
+  margin-bottom: var(--fx-space-sm);
+}
+
+/* Special paragraph styles */
+p.Comments,
+div.Comments,
+.Comments,
+p.comments,
+div.comments,
+.comments {
+  font-style: italic;
+  color: var(--fx-color-comments);
+  text-align: left;
+  margin-top: var(--fx-space-md);
+  margin-bottom: var(--fx-space-md);
+}
+
+p.Comments,
+div.Comments > p,
+div.Comments li,
+.Comments > p,
+.Comments li,
+p.comments,
+div.comments > p,
+div.comments li,
+.comments > p,
+.comments li {
+  font-style: italic;
+  color: var(--fx-color-comments);
+}
+
+p.Published,
+p.PublishedOn,
+div.Published,
+div.PublishedOn,
+.Published,
+.PublishedOn,
+p.published,
+p.publishedon,
+div.published,
+div.publishedon,
+.published,
+.publishedon {
+  font-style: italic;
+  text-align: right;
+  margin-top: var(--fx-space-md);
+  margin-bottom: var(--fx-space-md);
+}
+
+div.Published > p,
+div.PublishedOn > p,
+.Published > p,
+.PublishedOn > p,
+div.published > p,
+div.publishedon > p,
+.published > p,
+.publishedon > p {
+  text-align: right;
+}
+
+p.Offset,
+.Offset > p {
+  margin-top: var(--fx-space-sm);
+  margin-bottom: var(--fx-space-sm);
+  margin-left: 1cm;
+}
+
+/* Bullet list styles: List / List 2 / List 3 */
+ul,
+ul ul,
+ul ul ul {
+  list-style: none;
+  margin-bottom: var(--fx-space-sm);
+  padding-left: 0;
+}
+
+ul {
+  margin-top: var(--fx-space-sm);
+  margin-left: 0.5cm;
+}
+
+ul ul {
+  margin-top: var(--fx-space-xs);
+  margin-left: 0.5cm;
+}
+
+ul ul ul {
+  margin-top: var(--fx-space-xs);
+  margin-left: 0.5cm;
+}
+
+li {
+  position: relative;
+  text-align: justify;
+  margin-top: 0;
+  margin-bottom: var(--fx-space-xs);
+  padding-left: 0.38cm;
+}
+
+ul ul > li,
+ul ul ul > li {
+  padding-left: 0.5cm;
+}
+
+li::before {
+  content: "\2212";
+  position: absolute;
+  left: 0;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: auto;
+  margin-top: var(--fx-space-sm);
+  margin-bottom: var(--fx-space-sm);
+}
+
+th,
+td {
+  border: 1px solid var(--fx-color-border);
+  padding: 4pt 6pt;
+  font-size: 10pt;
+  text-align: justify;
+  vertical-align: top;
+}
+
+thead th {
+  background: var(--fx-color-table-head);
+  font-weight: 700;
+}
+
+/* Footnotes/endnotes rendering in HTML */
+.footnotes {
+  font-size: 8pt;
+}
+
+.footnotes ol li p {
+  margin-top: 0;
+  margin-bottom: 3pt;
+}
+
+/* ---------------------------
+   Automatic numbering system
+   --------------------------- */
+
+body {
+  counter-reset:
+    section
+    article1
+    article2
+    article3
+    article4
+    appendix1
+    appendix2
+    appendix3
+    appendix4
+    appendix5;
+}
+
+/* Common numbering layout */
+.Section,
+.Article-1,
+.Article-2,
+.Article-3,
+.Article-4,
+.Appendix-1,
+.Appendix-2,
+.Appendix-3,
+.Appendix-4,
+.Appendix-5,
+p.Section,
+p.Article-1,
+p.Article-2,
+p.Article-3,
+p.Article-4,
+p.Appendix-1,
+p.Appendix-2,
+p.Appendix-3,
+p.Appendix-4,
+p.Appendix-5 {
+  position: relative;
+}
+
+/* Main body */
+.Section,
+p.Section {
+  font-size: 12pt;
+  font-weight: 700;
+  text-decoration: underline;
+  text-align: left;
+  margin-top: var(--fx-space-xl);
+  margin-bottom: var(--fx-space-sm);
+  counter-increment: section;
+  counter-reset: article1 article2 article3 article4;
+}
+
+.Section::before,
+p.Section::before {
+  content: "Section " counter(section, upper-roman) ". ";
+}
+
+.Article-1,
+p.Article-1 {
+  font-size: 11pt;
+  font-weight: 700;
+  text-align: left;
+  margin-top: var(--fx-space-lg);
+  margin-bottom: var(--fx-space-sm);
+  counter-increment: article1;
+  counter-reset: article2 article3 article4;
+}
+
+.Article-1::before,
+p.Article-1::before {
+  content: "Article " counter(article1) ". ";
+}
+
+.Article-2,
+p.Article-2 {
+  text-align: justify;
+  margin-top: var(--fx-space-sm);
+  margin-bottom: var(--fx-space-sm);
+  padding-left: 0.75cm;
+  text-indent: -0.75cm;
+  counter-increment: article2;
+  counter-reset: article3 article4;
+}
+
+.Article-2::before,
+p.Article-2::before {
+  content: counter(article1) "." counter(article2) ". ";
+}
+
+.Article-3,
+p.Article-3 {
+  text-align: justify;
+  margin-top: var(--fx-space-xs);
+  margin-bottom: var(--fx-space-xs);
+  padding-left: 1.5cm;
+  text-indent: -0.5cm;
+  counter-increment: article3;
+  counter-reset: article4;
+}
+
+.Article-3::before,
+p.Article-3::before {
+  content: counter(article3, lower-alpha) ") ";
+}
+
+.Article-4,
+p.Article-4 {
+  text-align: justify;
+  margin-top: var(--fx-space-xs);
+  margin-bottom: var(--fx-space-xs);
+  padding-left: 2.25cm;
+  text-indent: -0.5cm;
+  counter-increment: article4;
+}
+
+.Article-4::before,
+p.Article-4::before {
+  content: counter(article4, lower-roman) ". ";
+}
+
+/* Appendices (separate numbering branch) */
+.Appendix-1,
+p.Appendix-1 {
+  font-size: 12pt;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid var(--fx-color-border);
+  margin-top: 0;
+  margin-bottom: var(--fx-space-md);
+  padding-bottom: 2pt;
+  counter-increment: appendix1;
+  counter-reset: appendix2 appendix3 appendix4 appendix5;
+  page-break-before: always;
+  break-before: page;
+}
+
+.Appendix-1::before,
+p.Appendix-1::before {
+  content: "Appendix " counter(appendix1) ". ";
+}
+
+.Appendix-2,
+p.Appendix-2 {
+  font-size: 12pt;
+  font-weight: 700;
+  text-decoration: underline;
+  text-align: left;
+  margin-top: var(--fx-space-xl);
+  margin-bottom: var(--fx-space-sm);
+  counter-increment: appendix2;
+  counter-reset: appendix3 appendix4 appendix5;
+}
+
+.Appendix-2::before,
+p.Appendix-2::before {
+  content: "Section " counter(appendix2, upper-alpha) ". ";
+}
+
+.Appendix-3,
+p.Appendix-3 {
+  font-size: 10pt;
+  font-weight: 400;
+  text-align: justify;
+  margin-top: var(--fx-space-md);
+  margin-bottom: var(--fx-space-sm);
+  padding-left: 0.75cm;
+  text-indent: -0.75cm;
+  counter-increment: appendix3;
+  counter-reset: appendix4 appendix5;
+}
+
+.Appendix-3::before,
+p.Appendix-3::before {
+  content: counter(appendix3) ". ";
+}
+
+.Appendix-4,
+p.Appendix-4 {
+  text-align: justify;
+  margin-top: var(--fx-space-sm);
+  margin-bottom: var(--fx-space-sm);
+  padding-left: 1.5cm;
+  text-indent: -0.5cm;
+  counter-increment: appendix4;
+  counter-reset: appendix5;
+}
+
+.Appendix-4::before,
+p.Appendix-4::before {
+  content: counter(appendix4, lower-alpha) ") ";
+}
+
+.Appendix-5,
+p.Appendix-5 {
+  text-align: justify;
+  margin-top: var(--fx-space-xs);
+  margin-bottom: var(--fx-space-xs);
+  padding-left: 2.25cm;
+  text-indent: -0.5cm;
+  counter-increment: appendix5;
+}
+
+.Appendix-5::before,
+p.Appendix-5::before {
+  content: counter(appendix5, lower-roman) ". ";
+}

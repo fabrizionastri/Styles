@@ -72,3 +72,64 @@ function Header(el)
 
   return nil
 end
+
+local function meta_title_to_inlines(meta_title)
+  if not meta_title then
+    return nil
+  end
+
+  local value_type = pandoc.utils.type(meta_title)
+
+  if value_type == "Inlines" then
+    return meta_title
+  end
+
+  if value_type == "MetaInlines" then
+    return meta_title.c
+  end
+
+  if value_type == "MetaString" then
+    return { pandoc.Str(tostring(meta_title)) }
+  end
+
+  if value_type == "MetaBlocks" then
+    return pandoc.utils.blocks_to_inlines(meta_title)
+  end
+
+  if type(meta_title) == "table" and meta_title.t == "MetaInlines" then
+    return meta_title.c
+  end
+
+  if type(meta_title) == "table" and meta_title.t == "MetaString" then
+    return { pandoc.Str(meta_title.c) }
+  end
+
+  if type(meta_title) == "table" and meta_title.t == "MetaBlocks" then
+    return pandoc.utils.blocks_to_inlines(meta_title.c)
+  end
+
+  return nil
+end
+
+function Pandoc(doc)
+  local title_inlines = meta_title_to_inlines(doc.meta and doc.meta.title)
+  if not title_inlines or #title_inlines == 0 then
+    return doc
+  end
+
+  local title_div = pandoc.Div(
+    { pandoc.Para(title_inlines) },
+    pandoc.Attr("", {}, { ["custom-style"] = "Heading 1" })
+  )
+
+  local updated_blocks = { title_div }
+  for _, block in ipairs(doc.blocks) do
+    updated_blocks[#updated_blocks + 1] = block
+  end
+
+  doc.blocks = updated_blocks
+  if doc.meta then
+    doc.meta.title = nil
+  end
+  return doc
+end
