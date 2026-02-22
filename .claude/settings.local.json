@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -ExecutionPolicy Bypass -File .commandsd2m.ps1 \".\\\\example\\\\example.docx\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"./commands/d2m.ps1\" \"./example/example.docx\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"cd ''C:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles''; & ''.\\\\commands\\\\m2d.ps1'' ''.\\\\example\\\\example.md'' ''.\\\\example\\\\example2.docx''\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"cd ''C:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles''; & ''.\\\\commands\\\\d2m.ps1'' ''.\\\\example\\\\example2.docx'' ''.\\\\example\\\\example2.md''\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"cd ''C:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles''; pandoc -f ''docx+styles'' -t native ''.\\\\example\\\\example.docx'' 2>&1\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"cd ''C:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles''; pandoc -f ''docx+styles'' -t native ''.\\\\example\\\\example2.docx'' 2>&1\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"cd ''C:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles''; $zip = [System.IO.Compression.ZipFile]::OpenRead\\(''.\\\\example\\\\example.docx''\\); $entry = $zip.Entries | Where-Object { $_.FullName -eq ''word/document.xml'' }; $reader = New-Object System.IO.StreamReader\\($entry.Open\\(\\)\\); $content = $reader.ReadToEnd\\(\\); $reader.Close\\(\\); $zip.Dispose\\(\\); $content\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory\\(''C:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\example.docx'', ''C:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\_docx_extract''\\)\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"Get-Content ''C:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\_docx_extract\\\\word\\\\document.xml'' -Raw | Select-String -Pattern ''fldChar|instrText|REF |NOTEREF|bookmark|crossRef'' -AllMatches | ForEach-Object { $_.Matches.Count }\")",
+      "Bash(python3:*)",
+      "Bash(tr:*)"
+    ]
+  }
+}
