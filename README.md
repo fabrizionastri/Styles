@@ -172,14 +172,14 @@ Everything below is detailed technical documentation for developers and advanced
 
 ## Toolchain overview
 
-| Script                               | Purpose                                            | Key dependencies                                               |
-| ------------------------------------ | -------------------------------------------------- | -------------------------------------------------------------- |
-| `commands/d2m.ps1`                   | DOCX to Markdown                                   | `filters/docx_to_compact.lua`                                  |
-| `commands/m2d.ps1`                   | Markdown to DOCX                                   | `filters/compact_to_docx.lua`, `styles/contract_template.docx` |
-| `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                       | `commands/remap_legacy_contracts.py`, `styles/contract_template.docx` |
-| `commands/commands.ps1`              | Loads `d2m`, `m2d`, `ld2d` as PowerShell functions | --                                                             |
-| `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile    | --                                                             |
-| `commands/remap_legacy_contracts.py` | In-place legacy style remapping                    | `python-docx`                                                  |
+| Script                               | Purpose                                            | Key dependencies                                                    |
+| ------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------- |
+| `commands/d2m.ps1`                   | DOCX to Markdown                                   | `filters/docx_to_compact.lua`                                       |
+| `commands/m2d.ps1`                   | Markdown to DOCX                                   | `filters/compact_to_docx.lua`, `styles/flexup_template.docx`        |
+| `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                       | `commands/remap_legacy_contracts.py`, `styles/flexup_template.docx` |
+| `commands/commands.ps1`              | Loads `d2m`, `m2d`, `ld2d` as PowerShell functions | --                                                                  |
+| `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile    | --                                                                  |
+| `commands/remap_legacy_contracts.py` | In-place legacy style remapping                    | `python-docx`                                                       |
 
 ## Conversion commands (direct invocation)
 
@@ -252,10 +252,10 @@ This requires Python 3.11+ and the `python-docx` package (managed via `pyproject
 
 ## Reference document
 
-The file `styles/contract_template.docx` is the Word reference template used by `m2d` and `ld2d` to produce correctly styled output. Keep this file aligned with your target Word style definitions. See the [style guide](styles/style_guide.md) and [style matrix](styles/style_matrix.md) for full style specifications.
+The file `styles/flexup_template.docx` is the Word reference template used by `m2d` and `ld2d` to produce correctly styled output. Keep this file aligned with your target Word style definitions. See the [style guide](styles/style_guide.md) and [style matrix](styles/style_matrix.md) for full style specifications.
 
 ## Related documentation
 
 - [styles/style_guide.md](styles/style_guide.md) -- full specification of every paragraph style, numbering scheme, and Markdown mapping
 - [styles/style_matrix.md](styles/style_matrix.md) -- compact reference table of all styles
-- [styles/contract_template.md](styles/contract_template.md) -- example Markdown contract showing all styles in use
+- [styles/flexup_template.md](styles/flexup_template.md) -- example Markdown contract showing all styles in use
