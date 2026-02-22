@@ -149,6 +149,13 @@ Existing contracts that were created before the new style set need to be convert
 **"pandoc is not installed or not in PATH"**
 Pandoc is not installed, or PowerShell was not restarted after installation. Install Pandoc (see Step 1 above) and open a new PowerShell window.
 
+**"Missing Python runtime: ...\\.venv\\Scripts\\python.exe" (when running `ld2d`)**
+`ld2d` remaps legacy styles in-place to preserve cross-references, and needs the local virtual environment.
+Create it from this repo root with:
+```powershell
+uv sync
+```
+
 **"d2m is not recognized as a command"**
 The commands are not loaded. Either run `install_commands.ps1` again (see Step 2 above), or close and reopen PowerShell.
 
@@ -169,10 +176,10 @@ Everything below is detailed technical documentation for developers and advanced
 | ------------------------------------ | -------------------------------------------------- | -------------------------------------------------------------- |
 | `commands/d2m.ps1`                   | DOCX to Markdown                                   | `filters/docx_to_compact.lua`                                  |
 | `commands/m2d.ps1`                   | Markdown to DOCX                                   | `filters/compact_to_docx.lua`, `styles/contract_template.docx` |
-| `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                       | `filters/remap.lua`, `styles/contract_template.docx`           |
+| `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                       | `commands/remap_legacy_contracts.py`, `styles/contract_template.docx` |
 | `commands/commands.ps1`              | Loads `d2m`, `m2d`, `ld2d` as PowerShell functions | --                                                             |
 | `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile    | --                                                             |
-| `commands/remap_legacy_contracts.py` | Python alternative for legacy style remapping      | `python-docx`                                                  |
+| `commands/remap_legacy_contracts.py` | In-place legacy style remapping                    | `python-docx`                                                  |
 
 ## Conversion commands (direct invocation)
 
@@ -214,7 +221,8 @@ Examples:
 
 ## Legacy style mapping
 
-The legacy remap (both the Lua filter in `ld2d` and the Python script) applies the following style conversions:
+`ld2d` remaps styles directly in the DOCX file (in-place style remap), preserving Word cross-references and bookmarks.
+It applies the following style conversions:
 
 | Legacy style | New style |
 | ------------ | --------- |
@@ -224,12 +232,12 @@ The legacy remap (both the Lua filter in `ld2d` and the Python script) applies t
 | Heading 3    | Article 3 |
 | Heading 4    | Article 4 |
 | Heading 6    | Heading 4 |
+| PublishedOn  | Published |
+| ToDo         | Comments  |
 
-The Lua filter (`remap.lua`) additionally converts native Markdown headings (H1-H4) to their corresponding Article styles, and H6 to Heading 4.
+## Python legacy remap
 
-## Python legacy remap (alternative)
-
-An alternative to `ld2d` is the Python script, which remaps styles directly in the DOCX file without going through Pandoc:
+`ld2d` uses the Python script under the hood. You can also run it directly:
 
 ```powershell
 # With activated virtual environment
