@@ -67,7 +67,7 @@ function Convert-OffsetPrefixesToStyleSuffix {
     [string]$InputPath
   )
 
-  $raw = Get-Content -LiteralPath $InputPath -Raw -ErrorAction Stop
+  $raw = [System.IO.File]::ReadAllText($InputPath, [System.Text.Encoding]::UTF8)
   $normalized = $raw -replace "`r`n", "`n"
   $lines = $normalized -split "`n", -1
   $outLines = New-Object 'System.Collections.Generic.List[string]'
@@ -162,7 +162,8 @@ $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $Outp
 
 $preparedMarkdown = Convert-OffsetPrefixesToStyleSuffix -InputPath $resolvedInput
 $tempInput = Join-Path ([System.IO.Path]::GetTempPath()) ("m2d_" + [System.Guid]::NewGuid().ToString("N") + ".md")
-Set-Content -LiteralPath $tempInput -Value $preparedMarkdown -NoNewline -Encoding utf8
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($tempInput, $preparedMarkdown, $utf8NoBom)
 
 try {
   & pandoc `
