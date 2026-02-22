@@ -27,6 +27,32 @@ Sub Clean_Contract_SC()
     End With
     Selection.Find.Execute Replace:=wdReplaceAll
 
+    ' Replace [ and < by ‹
+    With Selection.Find
+        .Text = "["
+        .Replacement.Text = "‹"
+    End With
+    Selection.Find.Execute Replace:=wdReplaceAll
+
+    With Selection.Find
+        .Text = "<"
+        .Replacement.Text = "‹"
+    End With
+    Selection.Find.Execute Replace:=wdReplaceAll
+
+    ' Replace ] and > by ›
+    With Selection.Find
+        .Text = "]"
+        .Replacement.Text = "›"
+    End With
+    Selection.Find.Execute Replace:=wdReplaceAll
+    
+    With Selection.Find
+        .Text = ">"
+        .Replacement.Text = "›"
+    End With
+    Selection.Find.Execute Replace:=wdReplaceAll
+
     ' Remove double space after {{
     With Selection.Find
         .Text = "{{  "
@@ -140,5 +166,10 @@ Sub Clean_Contract_SC()
     ' Reset find settings
     Selection.Find.ClearFormatting
     Selection.Find.Replacement.ClearFormatting
+
+
+    '=== Apply British English language setting to entire document ===
+    ActiveDocument.Content.LanguageID = wdEnglishUK
+
 
 End Sub
