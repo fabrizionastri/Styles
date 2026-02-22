@@ -9,7 +9,7 @@ param(
 
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $filterPath = Join-Path $scriptRoot "..\filters\compact_to_docx.lua"
-$referenceDoc = Join-Path $scriptRoot "..\styles\contract_template.docx"
+$referenceDoc = Join-Path $scriptRoot "..\styles\flexup_template.docx"
 $defaultInputExtension = ".md"
 $defaultOutputExtension = ".docx"
 
@@ -126,9 +126,9 @@ function Convert-OffsetPrefixesToStyleSuffix {
     if ($line -match '^  (\S.*)$') {
       $body = $Matches[1]
       $isListLike = ($body -match '^[-*+]\s') -or
-        ($body -match '^\d+[.)]\s') -or
-        ($body -match '^[A-Za-z][.)]\s') -or
-        ($body -match '^[ivxlcdmIVXLCDM]+\.\s')
+      ($body -match '^\d+[.)]\s') -or
+      ($body -match '^[A-Za-z][.)]\s') -or
+      ($body -match '^[ivxlcdmIVXLCDM]+\.\s')
       $isTableLike = $body -match '^\|'
       $isDivFence = $body -match '^:::'
       $isHeadingLike = $body -match '^#{1,6}\s'
