@@ -26,6 +26,9 @@ local UNWRAP_STYLE_SET = {
 local BLOCK_STYLE_SET = {
   ["Comments"] = true,
   ["Published"] = true,
+  ["index 1"] = true,
+  ["index 2"] = true,
+  ["index 3"] = true,
 }
 
 local STYLE_CANONICAL_MAP = {
@@ -143,14 +146,24 @@ local function clean_inlines(inlines, state, convert_blocks)
   for _, inl in ipairs(inlines) do
     if inl.t == "Span" then
       local span_style = get_custom_style(inl.attr)
+      local span_id = inl.attr and inl.attr.identifier or ""
       local inner = clean_inlines(inl.content, state, convert_blocks)
-      if span_style and span_style:lower():find("note reference", 1, true) then
+      if span_id ~= "" and span_id:match("^ref%-") then
+        out:insert(pandoc.Span(inner, pandoc.Attr(span_id, {}, {})))
+      elseif span_style and span_style:lower():find("note reference", 1, true) then
+        for _, s in ipairs(inner) do
+          out:insert(s)
+        end
+      elseif span_style and span_style:lower() == "hyperlink" then
         for _, s in ipairs(inner) do
           out:insert(s)
         end
       else
         out:insert(pandoc.Span(inner))
       end
+    elseif inl.t == "Link" then
+      local inner = clean_inlines(inl.content, state, convert_blocks)
+      out:insert(pandoc.Link(inner, inl.target, inl.title, inl.attr))
     elseif inl.t == "Note" then
       local note_blocks = convert_blocks(inl.content, state)
       out:insert(pandoc.Note(note_blocks))
@@ -458,7 +471,7 @@ local function convert_blocks(blocks, state)
       lines[#lines + 1] = "| " .. table.concat(cells, " | ") .. " |"
     end
 
-    return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
+    return pandoc.RawBlock("markdown", "\n" .. table.concat(lines, "\n"))
   end
 
   local function convert_div(div)

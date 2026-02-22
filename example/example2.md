@@ -53,7 +53,7 @@ Normal with a footnote [^1]
 | **Term** | **Definition** |
 | --- | --- |
 | **Orange** | The quick brown fox jumps over the lazy dog. This sentence is commonly used to demonstrate fonts and test typing skills, as it contains all the letters of the English alphabet.<br>The quick brown fox jumps over the lazy dog. This sentence is commonly used to demonstrate fonts and test typing skills, as it contains all the letters of the English alphabet. |
-| **Apple** | - The quick brown fox jumps over the lazy dog.   - The quick brown fox jumps over the lazy dog.   - The quick brown fox jumps over the lazy dog.<br>- The quick brown fox jumps over the lazy dog.     - The quick brown fox jumps over the lazy dog. |
+| **Apple** | \- The quick brown fox jumps over the lazy dog. - The quick brown fox jumps over the lazy dog. - The quick brown fox jumps over the lazy dog.<br>\- The quick brown fox jumps over the lazy dog. - The quick brown fox jumps over the lazy dog. |
 
 # Appendix 1. Table of contents
 
