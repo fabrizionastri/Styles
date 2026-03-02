@@ -86,7 +86,23 @@ ld2d "Old Contract.docx"
 ```
 This creates `Old Contract_remapped.docx` in the same folder. Open this file in Word and verify that it looks correct before proceeding.
 
-You can also specify a different output name:
+**Convert all Markdown files in a folder to Word:**
+```
+m2d-all
+m2d-all "C:\Contracts\Templates"
+```
+With no argument, converts every `.md` file in the current folder. With a folder path, converts every `.md` file in that folder. Output files are always created alongside the source files.
+
+**Convert all Word files in a folder to Markdown:**
+```
+d2m-all
+d2m-all "C:\Contracts\Templates"
+```
+Same as above, but converts every `.docx` file to `.md`.
+
+If an output file already exists, the commands add a counter to avoid overwriting: `My Contract_1.docx`, `My Contract_2.docx`, etc.
+
+You can also specify a different output name for single-file commands:
 ```
 d2m "My Contract.docx" "output.md"
 m2d "My Contract.md" "output.docx"
@@ -94,6 +110,8 @@ ld2d "Old Contract.docx" "New Contract"
 ```
 
 You don't need to type the file extension -- the commands will add `.docx` or `.md` automatically if you leave it out.
+
+Output files are always created in the same folder as the input file, regardless of your current directory.
 
 
 
@@ -177,7 +195,9 @@ Everything below is detailed technical documentation for developers and advanced
 | `commands/d2m.ps1`                   | DOCX to Markdown                                   | `filters/docx_to_compact.lua`                                       |
 | `commands/m2d.ps1`                   | Markdown to DOCX                                   | `filters/compact_to_docx.lua`, `styles/flexup_template.docx`        |
 | `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                       | `commands/remap_legacy_contracts.py`, `styles/flexup_template.docx` |
-| `commands/commands.ps1`              | Loads `d2m`, `m2d`, `ld2d` as PowerShell functions | --                                                                  |
+| `commands/m2d-all.ps1`               | Batch Markdown to DOCX (all files in a folder)     | `m2d`                                                                |
+| `commands/d2m-all.ps1`               | Batch DOCX to Markdown (all files in a folder)     | `d2m`                                                                |
+| `commands/commands.ps1`              | Loads all commands as PowerShell functions          | --                                                                  |
 | `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile    | --                                                                  |
 | `commands/remap_legacy_contracts.py` | In-place legacy style remapping                    | `python-docx`                                                       |
 
@@ -203,15 +223,37 @@ powershell -ExecutionPolicy Bypass -File .\commands\ld2d.ps1 "legacy.docx"
 powershell -ExecutionPolicy Bypass -File .\commands\ld2d.ps1 "legacy.docx" "output"
 ```
 
+## Batch commands (direct invocation)
+
+**Convert all Markdown files in a folder to DOCX:**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\commands\m2d-all.ps1
+powershell -ExecutionPolicy Bypass -File .\commands\m2d-all.ps1 "C:\Contracts\Templates"
+```
+
+**Convert all DOCX files in a folder to Markdown:**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\commands\d2m-all.ps1
+powershell -ExecutionPolicy Bypass -File .\commands\d2m-all.ps1 "C:\Contracts\Templates"
+```
+
+Both batch commands process only the top-level folder (no recursion into subfolders). If an output file already exists, a counter is appended to the filename (e.g. `contract_1.docx`) to avoid overwriting.
+
+## Output path behaviour
+
+All commands (`d2m`, `m2d`, `ld2d`, `d2m-all`, `m2d-all`) create output files in the same folder as the input file, regardless of the current working directory. If you provide an explicit relative output path, it is also resolved relative to the input file's folder. Only absolute output paths override this behaviour.
+
 ## Extension inference
 
 All commands automatically add file extensions when omitted:
 
-| Command | Input default | Output default   |
-| ------- | ------------- | ---------------- |
-| `d2m`   | `.docx`       | `.md`            |
-| `m2d`   | `.md`         | `.docx`          |
-| `ld2d`  | `.docx`       | `_remapped.docx` |
+| Command   | Input default | Output default   |
+| --------- | ------------- | ---------------- |
+| `d2m`     | `.docx`       | `.md`            |
+| `m2d`     | `.md`         | `.docx`          |
+| `ld2d`    | `.docx`       | `_remapped.docx` |
+| `d2m-all` | all `.docx`   | `.md`            |
+| `m2d-all` | all `.md`     | `.docx`          |
 
 Examples:
 - `d2m "contract"` reads `contract.docx`, writes `contract.md`

@@ -33,7 +33,9 @@
       "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"cd ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles''; & ''.\\\\commands\\\\d2m.ps1'' ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\example_xref.docx'' ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\example_xref_rt.md''\")",
       "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"cd ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles''; & ''.\\\\commands\\\\d2m.ps1'' ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\example.docx'' ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\example_xref.md''; & ''.\\\\commands\\\\m2d.ps1'' ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\example_xref.md'' ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\example_xref.docx''; & ''.\\\\commands\\\\d2m.ps1'' ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\example_xref.docx'' ''c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\example_xref_rt.md''\")",
       "Bash(powershell.exe -ExecutionPolicy Bypass -Command:*)",
-      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\_inspect_xref2.ps1\")"
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\_inspect_xref2.ps1\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\example\\\\_inspect_table.ps1\")",
+      "Bash(powershell -NoProfile -Command \":*)"
     ]
   }
 }

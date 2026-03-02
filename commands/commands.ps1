@@ -39,3 +39,23 @@ function ld2d {
 
   & (Join-Path $script:commandsRoot "ld2d.ps1") $InputFile $OutputFile
 }
+
+function m2d-all {
+  [CmdletBinding()]
+  param(
+    [Parameter(Position = 0)]
+    [string]$TargetFolder
+  )
+
+  & (Join-Path $script:commandsRoot "m2d-all.ps1") $TargetFolder
+}
+
+function d2m-all {
+  [CmdletBinding()]
+  param(
+    [Parameter(Position = 0)]
+    [string]$TargetFolder
+  )
+
+  & (Join-Path $script:commandsRoot "d2m-all.ps1") $TargetFolder
+}

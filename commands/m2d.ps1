@@ -48,17 +48,41 @@ function Resolve-OutputPath {
     [string]$DefaultExtension
   )
 
+  $inputDir = Split-Path -Parent $InputPath
+
   if ([string]::IsNullOrWhiteSpace($OutputPath)) {
-    $inputDir = Split-Path -Parent $InputPath
     $inputBase = [System.IO.Path]::GetFileNameWithoutExtension($InputPath)
-    return (Join-Path $inputDir ($inputBase + $DefaultExtension))
+    $resolved = Join-Path $inputDir ($inputBase + $DefaultExtension)
+  } else {
+    if ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($OutputPath))) {
+      $OutputPath = $OutputPath + $DefaultExtension
+    }
+    if (-not [System.IO.Path]::IsPathRooted($OutputPath)) {
+      $OutputPath = Join-Path $inputDir $OutputPath
+    }
+    $resolved = $OutputPath
   }
 
-  if ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($OutputPath))) {
-    return ($OutputPath + $DefaultExtension)
+  if (Test-Path -LiteralPath $resolved) {
+    $dir = Split-Path -Parent $resolved
+    $ext = [System.IO.Path]::GetExtension($resolved)
+    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($resolved)
+
+    if ($baseName -match '^(.+)_(\d+)$') {
+      $root = $Matches[1]
+      $counter = [int]$Matches[2] + 1
+    } else {
+      $root = $baseName
+      $counter = 1
+    }
+
+    do {
+      $resolved = Join-Path $dir "${root}_${counter}${ext}"
+      $counter++
+    } while (Test-Path -LiteralPath $resolved)
   }
 
-  return $OutputPath
+  return $resolved
 }
 
 function Convert-OffsetPrefixesToStyleSuffix {
@@ -145,6 +169,89 @@ function Convert-OffsetPrefixesToStyleSuffix {
   return ($outLines -join "`n")
 }
 
+function Format-DocxTables {
+  param([string]$DocxPath)
+
+  Add-Type -AssemblyName System.IO.Compression
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $nsUri = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
+  $zip = [System.IO.Compression.ZipFile]::Open(
+    $DocxPath, [System.IO.Compression.ZipArchiveMode]::Update)
+
+  try {
+    $entry = $zip.Entries | Where-Object { $_.FullName -eq 'word/document.xml' }
+    $stream = $entry.Open()
+    $reader = New-Object System.IO.StreamReader($stream, [System.Text.Encoding]::UTF8)
+    $content = $reader.ReadToEnd()
+    $reader.Dispose()
+
+    $xml = [xml]$content
+    $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+    $ns.AddNamespace('w', $nsUri)
+
+    $modified = $false
+
+    foreach ($tbl in $xml.SelectNodes('//w:tbl', $ns)) {
+      $modified = $true
+
+      # --- Table borders ---
+      $tblPr = $tbl.SelectSingleNode('w:tblPr', $ns)
+      if (-not $tblPr) {
+        $tblPr = $xml.CreateElement('w', 'tblPr', $nsUri)
+        $tbl.PrependChild($tblPr) | Out-Null
+      }
+
+      $old = $tblPr.SelectSingleNode('w:tblBorders', $ns)
+      if ($old) { $tblPr.RemoveChild($old) | Out-Null }
+
+      $borders = $xml.CreateElement('w', 'tblBorders', $nsUri)
+      foreach ($side in @('top', 'left', 'bottom', 'right', 'insideH', 'insideV')) {
+        $b = $xml.CreateElement('w', $side, $nsUri)
+        $null = $b.SetAttribute('val', $nsUri, 'single')
+        $null = $b.SetAttribute('sz', $nsUri, '4')
+        $null = $b.SetAttribute('space', $nsUri, '0')
+        $null = $b.SetAttribute('color', $nsUri, 'BFBFBF')
+        $borders.AppendChild($b) | Out-Null
+      }
+      $tblPr.AppendChild($borders) | Out-Null
+
+      # --- Header row shading ---
+      $firstRow = $tbl.SelectSingleNode('w:tr', $ns)
+      if (-not $firstRow) { continue }
+
+      foreach ($tc in $firstRow.SelectNodes('w:tc', $ns)) {
+        $tcPr = $tc.SelectSingleNode('w:tcPr', $ns)
+        if (-not $tcPr) {
+          $tcPr = $xml.CreateElement('w', 'tcPr', $nsUri)
+          $tc.PrependChild($tcPr) | Out-Null
+        }
+
+        $oldShd = $tcPr.SelectSingleNode('w:shd', $ns)
+        if ($oldShd) { $tcPr.RemoveChild($oldShd) | Out-Null }
+
+        $shd = $xml.CreateElement('w', 'shd', $nsUri)
+        $null = $shd.SetAttribute('val', $nsUri, 'clear')
+        $null = $shd.SetAttribute('color', $nsUri, 'auto')
+        $null = $shd.SetAttribute('fill', $nsUri, 'F2F2F2')
+        $tcPr.AppendChild($shd) | Out-Null
+      }
+    }
+
+    if ($modified) {
+      $entry.Delete()
+      $newEntry = $zip.CreateEntry('word/document.xml',
+        [System.IO.Compression.CompressionLevel]::Optimal)
+      $ws = $newEntry.Open()
+      $xml.Save($ws)
+      $ws.Close()
+    }
+  }
+  finally {
+    $zip.Dispose()
+  }
+}
+
 if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) {
   throw "Pandoc is not installed or not in PATH."
 }
@@ -184,5 +291,7 @@ finally {
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
+
+Format-DocxTables -DocxPath $resolvedOutput
 
 Write-Output "Created: $resolvedOutput"

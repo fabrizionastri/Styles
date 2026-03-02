@@ -48,17 +48,41 @@ function Resolve-OutputPath {
     [string]$DefaultExtension
   )
 
+  $inputDir = Split-Path -Parent $InputPath
+
   if ([string]::IsNullOrWhiteSpace($OutputPath)) {
-    $inputDir = Split-Path -Parent $InputPath
     $inputBase = [System.IO.Path]::GetFileNameWithoutExtension($InputPath)
-    return (Join-Path $inputDir ($inputBase + "_remapped" + $DefaultExtension))
+    $resolved = Join-Path $inputDir ($inputBase + "_remapped" + $DefaultExtension)
+  } else {
+    if ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($OutputPath))) {
+      $OutputPath = $OutputPath + $DefaultExtension
+    }
+    if (-not [System.IO.Path]::IsPathRooted($OutputPath)) {
+      $OutputPath = Join-Path $inputDir $OutputPath
+    }
+    $resolved = $OutputPath
   }
 
-  if ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($OutputPath))) {
-    return ($OutputPath + $DefaultExtension)
+  if (Test-Path -LiteralPath $resolved) {
+    $dir = Split-Path -Parent $resolved
+    $ext = [System.IO.Path]::GetExtension($resolved)
+    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($resolved)
+
+    if ($baseName -match '^(.+)_(\d+)$') {
+      $root = $Matches[1]
+      $counter = [int]$Matches[2] + 1
+    } else {
+      $root = $baseName
+      $counter = 1
+    }
+
+    do {
+      $resolved = Join-Path $dir "${root}_${counter}${ext}"
+      $counter++
+    } while (Test-Path -LiteralPath $resolved)
   }
 
-  return $OutputPath
+  return $resolved
 }
 
 if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) {
