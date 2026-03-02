@@ -262,7 +262,8 @@ local function render_offset_style(content_blocks)
     return pandoc.List:new()
   end
 
-  return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
+  -- Ensure offset paragraphs are always separated from the previous block.
+  return pandoc.RawBlock("markdown", "\n" .. table.concat(lines, "\n"))
 end
 
 local function bullet_level_from_style(style_name)

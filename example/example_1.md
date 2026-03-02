@@ -1,4 +1,4 @@
-# FlexUp Collaboration -- General Conditions (Collaboration-GC)
+﻿# FlexUp Collaboration -- General Conditions (Collaboration-GC)
 
 ::: Published
 Published by FlexUp on xx February 2026
