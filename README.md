@@ -190,16 +190,16 @@ Everything below is detailed technical documentation for developers and advanced
 
 ## Toolchain overview
 
-| Script                               | Purpose                                            | Key dependencies                                                    |
-| ------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------- |
-| `commands/d2m.ps1`                   | DOCX to Markdown                                   | `filters/docx_to_compact.lua`                                       |
-| `commands/m2d.ps1`                   | Markdown to DOCX                                   | `filters/compact_to_docx.lua`, `styles/flexup_template.docx`        |
-| `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                       | `commands/remap_legacy_contracts.py`, `styles/flexup_template.docx` |
-| `commands/m2d-all.ps1`               | Batch Markdown to DOCX (all files in a folder)     | `m2d`                                                                |
-| `commands/d2m-all.ps1`               | Batch DOCX to Markdown (all files in a folder)     | `d2m`                                                                |
-| `commands/commands.ps1`              | Loads all commands as PowerShell functions          | --                                                                  |
-| `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile    | --                                                                  |
-| `commands/remap_legacy_contracts.py` | In-place legacy style remapping                    | `python-docx`                                                       |
+| Script                               | Purpose                                         | Key dependencies                                                    |
+| ------------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------- |
+| `commands/d2m.ps1`                   | DOCX to Markdown                                | `filters/docx_to_compact.lua`                                       |
+| `commands/m2d.ps1`                   | Markdown to DOCX                                | `filters/compact_to_docx.lua`, `styles/flexup_template.docx`        |
+| `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                    | `commands/remap_legacy_contracts.py`, `styles/flexup_template.docx` |
+| `commands/m2d-all.ps1`               | Batch Markdown to DOCX (all files in a folder)  | `m2d`                                                               |
+| `commands/d2m-all.ps1`               | Batch DOCX to Markdown (all files in a folder)  | `d2m`                                                               |
+| `commands/commands.ps1`              | Loads all commands as PowerShell functions      | --                                                                  |
+| `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile | --                                                                  |
+| `commands/remap_legacy_contracts.py` | In-place legacy style remapping                 | `python-docx`                                                       |
 
 ## Conversion commands (direct invocation)
 

@@ -23,10 +23,10 @@ if (-not (Test-Path -LiteralPath $TargetFolder -PathType Container)) {
 }
 
 # Find all .docx files in the top-level folder only
-$docxFiles = Get-ChildItem -LiteralPath $TargetFolder -Filter "*.docx" -File
+$docxFiles = @(Get-ChildItem -LiteralPath $TargetFolder -Filter "*.docx" -File)
 
 if ($docxFiles.Count -eq 0) {
-  Write-Host "No .docx files found in: $TargetFolder"
+  Write-Host "No docx file found in this directory"
   return
 }
 

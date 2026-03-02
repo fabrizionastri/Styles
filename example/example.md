@@ -157,7 +157,6 @@ No Party shall be liable for the debts, defaults, or losses of the other Party s
   If no agreement is reached within ten (10) business days, either Party may refer the matter to dispute resolution under the FlexUp-GC.
 
 5.6. **Data Protection**. The Parties shall ensure that any sharing of personal data relating to Clients or their representatives complies with all applicable data protection laws, including obtaining all necessary consents before sharing such data. The provisions of Article "Data Protection" of the FlexUp-GC apply.
-
   Unless otherwise agreed In Writing, each Party acts as an independent data controller with respect to personal data it receives under this Contract.
 
 ### Article 6. Referral Activity

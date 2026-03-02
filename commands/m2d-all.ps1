@@ -23,10 +23,10 @@ if (-not (Test-Path -LiteralPath $TargetFolder -PathType Container)) {
 }
 
 # Find all .md files in the top-level folder only
-$mdFiles = Get-ChildItem -LiteralPath $TargetFolder -Filter "*.md" -File
+$mdFiles = @(Get-ChildItem -LiteralPath $TargetFolder -Filter "*.md" -File)
 
 if ($mdFiles.Count -eq 0) {
-  Write-Host "No .md files found in: $TargetFolder"
+  Write-Host "No md file found in this directory"
   return
 }
 
