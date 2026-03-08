@@ -294,6 +294,159 @@ function Add-CrossReferences {
   return $result
 }
 
+function Get-UniqueFilePath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$CandidatePath
+  )
+
+  if (-not (Test-Path -LiteralPath $CandidatePath)) {
+    return $CandidatePath
+  }
+
+  $dir = Split-Path -Parent $CandidatePath
+  $ext = [System.IO.Path]::GetExtension($CandidatePath)
+  $baseName = [System.IO.Path]::GetFileNameWithoutExtension($CandidatePath)
+
+  if ($baseName -match '^(.+)_(\d+)$') {
+    $root = $Matches[1]
+    $counter = [int]$Matches[2] + 1
+  } else {
+    $root = $baseName
+    $counter = 1
+  }
+
+  do {
+    $candidate = Join-Path $dir "${root}_${counter}${ext}"
+    $counter++
+  } while (Test-Path -LiteralPath $candidate)
+
+  return $candidate
+}
+
+function Get-RelativeMarkdownPath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$FromDirectory,
+
+    [Parameter(Mandatory = $true)]
+    [string]$ToPath
+  )
+
+  $fromFull = [System.IO.Path]::GetFullPath($FromDirectory)
+  if (-not $fromFull.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {
+    $fromFull += [System.IO.Path]::DirectorySeparatorChar
+  }
+
+  $toFull = [System.IO.Path]::GetFullPath($ToPath)
+  $fromUri = [System.Uri]$fromFull
+  $toUri = [System.Uri]$toFull
+  $relative = $fromUri.MakeRelativeUri($toUri).ToString()
+
+  return [System.Uri]::UnescapeDataString($relative).Replace('\', '/')
+}
+
+function Rewrite-ExtractedImageLinks {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Markdown,
+
+    [Parameter(Mandatory = $true)]
+    [string]$ExtractRoot,
+
+    [Parameter(Mandatory = $true)]
+    [string]$TargetMediaDirectory,
+
+    [Parameter(Mandatory = $true)]
+    [string]$OutputPath
+  )
+
+  $outputDir = Split-Path -Parent $OutputPath
+  $copiedPaths = @{}
+  $pattern = [regex]'!\[(?<alt>[^\]]*)\]\((?<target>[^)\r\n]+)\)'
+
+  return $pattern.Replace($Markdown, {
+    param($match)
+
+    $altText = $match.Groups['alt'].Value
+    $rawTarget = $match.Groups['target'].Value.Trim()
+
+    if ([string]::IsNullOrWhiteSpace($rawTarget)) {
+      return $match.Value
+    }
+
+    $pathPart = $rawTarget
+    $titlePart = ""
+
+    if ($rawTarget.StartsWith("<")) {
+      $closing = $rawTarget.IndexOf(">")
+      if ($closing -gt 0) {
+        $pathPart = $rawTarget.Substring(1, $closing - 1)
+        $titlePart = $rawTarget.Substring($closing + 1).TrimStart()
+      }
+    } elseif ($rawTarget -match "^(?<path>\S+)(?<rest>\s+[""'].*)?$") {
+      $pathPart = $Matches["path"]
+      if ($Matches.ContainsKey("rest") -and $null -ne $Matches["rest"]) {
+        $titlePart = $Matches["rest"].TrimStart()
+      } else {
+        $titlePart = ""
+      }
+    }
+
+    if ($pathPart -match '^(?i)(https?|ftp|ftps|mailto|tel|data|file):') {
+      return $match.Value
+    }
+
+    if ($pathPart.StartsWith("#")) {
+      return $match.Value
+    }
+
+    $relativeExtractPath = $pathPart -replace '/', [System.IO.Path]::DirectorySeparatorChar
+    $sourcePath = if ([System.IO.Path]::IsPathRooted($relativeExtractPath)) {
+      $relativeExtractPath
+    } else {
+      Join-Path $ExtractRoot $relativeExtractPath
+    }
+
+    if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
+      return $match.Value
+    }
+
+    $sourcePath = [System.IO.Path]::GetFullPath($sourcePath)
+    $cacheKey = $sourcePath.ToLowerInvariant()
+
+    if (-not $copiedPaths.ContainsKey($cacheKey)) {
+      if (-not (Test-Path -LiteralPath $TargetMediaDirectory)) {
+        New-Item -ItemType Directory -Path $TargetMediaDirectory -Force | Out-Null
+      }
+
+      $fileName = [System.IO.Path]::GetFileName($sourcePath)
+      if ([string]::IsNullOrWhiteSpace($fileName)) {
+        $fileName = "image.bin"
+      }
+
+      $targetPath = Get-UniqueFilePath -CandidatePath (Join-Path $TargetMediaDirectory $fileName)
+      Copy-Item -LiteralPath $sourcePath -Destination $targetPath
+
+      $relativeTarget = Get-RelativeMarkdownPath -FromDirectory $outputDir -ToPath $targetPath
+      $copiedPaths[$cacheKey] = @{
+        Path = $relativeTarget
+        Name = [System.IO.Path]::GetFileNameWithoutExtension($targetPath)
+      }
+    }
+
+    $mapped = $copiedPaths[$cacheKey]
+    $newAlt = if ([string]::IsNullOrWhiteSpace($altText)) { $mapped.Name } else { $altText }
+    $newTarget = $mapped.Path
+    if ($newTarget -match '\s') {
+      $newTarget = "<$newTarget>"
+    }
+
+    $titleSuffix = if ([string]::IsNullOrWhiteSpace($titlePart)) { "" } else { " $titlePart" }
+    return "![${newAlt}]($newTarget$titleSuffix)"
+  })
+}
+
 if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) {
   throw "Pandoc is not installed or not in PATH."
 }
@@ -304,16 +457,23 @@ if (-not (Test-Path -LiteralPath $filterPath)) {
 
 $resolvedInput = Resolve-InputPath -PathValue $InputFile -DefaultExtension $defaultInputExtension
 $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $OutputFile -DefaultExtension $defaultOutputExtension
+$sourceDirectory = Split-Path -Parent $resolvedInput
+$targetMediaDirectory = Join-Path $sourceDirectory "_media"
 
-$tempOutput = Join-Path ([System.IO.Path]::GetTempPath()) ("d2m_" + [System.Guid]::NewGuid().ToString("N") + ".md")
+$tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("d2m_" + [System.Guid]::NewGuid().ToString("N"))
+$tempOutput = Join-Path $tempRoot "output.md"
+$tempExtract = Join-Path $tempRoot "media_extract"
 
 try {
+  New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+
   $xrefData = Extract-CrossReferences -DocxPath $resolvedInput
 
   & pandoc `
     -f "docx+styles" `
     -t "markdown+fenced_divs" `
     --wrap=none `
+    --extract-media="$tempExtract" `
     --lua-filter="$filterPath" `
     "$resolvedInput" `
     -o "$tempOutput"
@@ -325,12 +485,17 @@ try {
   $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
   $rendered = [System.IO.File]::ReadAllText($tempOutput, $utf8NoBom)
   $rendered = Add-CrossReferences -Markdown $rendered -XRefData $xrefData
+  $rendered = Rewrite-ExtractedImageLinks `
+    -Markdown $rendered `
+    -ExtractRoot $tempExtract `
+    -TargetMediaDirectory $targetMediaDirectory `
+    -OutputPath $resolvedOutput
   $utf8Bom = New-Object System.Text.UTF8Encoding($true)
   [System.IO.File]::WriteAllText($resolvedOutput, $rendered, $utf8Bom)
 }
 finally {
-  if (Test-Path -LiteralPath $tempOutput) {
-    Remove-Item -LiteralPath $tempOutput -Force
+  if (Test-Path -LiteralPath $tempRoot) {
+    Remove-Item -LiteralPath $tempRoot -Force -Recurse
   }
 }
 

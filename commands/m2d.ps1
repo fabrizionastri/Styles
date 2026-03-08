@@ -169,6 +169,128 @@ function Convert-OffsetPrefixesToStyleSuffix {
   return ($outLines -join "`n")
 }
 
+function Get-UniqueFilePath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$CandidatePath
+  )
+
+  if (-not (Test-Path -LiteralPath $CandidatePath)) {
+    return $CandidatePath
+  }
+
+  $dir = Split-Path -Parent $CandidatePath
+  $ext = [System.IO.Path]::GetExtension($CandidatePath)
+  $baseName = [System.IO.Path]::GetFileNameWithoutExtension($CandidatePath)
+
+  if ($baseName -match '^(.+)_(\d+)$') {
+    $root = $Matches[1]
+    $counter = [int]$Matches[2] + 1
+  } else {
+    $root = $baseName
+    $counter = 1
+  }
+
+  do {
+    $candidate = Join-Path $dir "${root}_${counter}${ext}"
+    $counter++
+  } while (Test-Path -LiteralPath $candidate)
+
+  return $candidate
+}
+
+function Stage-MarkdownImages {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Markdown,
+
+    [Parameter(Mandatory = $true)]
+    [string]$MarkdownPath,
+
+    [Parameter(Mandatory = $true)]
+    [string]$TempRoot
+  )
+
+  $sourceDirectory = Split-Path -Parent $MarkdownPath
+  $stagedMediaDirectory = Join-Path $TempRoot "_media"
+  if (-not (Test-Path -LiteralPath $stagedMediaDirectory)) {
+    New-Item -ItemType Directory -Path $stagedMediaDirectory -Force | Out-Null
+  }
+
+  $stagedBySourcePath = @{}
+  $pattern = [regex]'!\[(?<alt>[^\]]*)\]\((?<target>[^)\r\n]+)\)'
+
+  return $pattern.Replace($Markdown, {
+    param($match)
+
+    $altText = $match.Groups['alt'].Value
+    $rawTarget = $match.Groups['target'].Value.Trim()
+
+    if ([string]::IsNullOrWhiteSpace($rawTarget)) {
+      return $match.Value
+    }
+
+    $pathPart = $rawTarget
+    $titlePart = ""
+
+    if ($rawTarget.StartsWith("<")) {
+      $closing = $rawTarget.IndexOf(">")
+      if ($closing -gt 0) {
+        $pathPart = $rawTarget.Substring(1, $closing - 1)
+        $titlePart = $rawTarget.Substring($closing + 1).TrimStart()
+      }
+    } elseif ($rawTarget -match "^(?<path>\S+)(?<rest>\s+[""'].*)?$") {
+      $pathPart = $Matches["path"]
+      if ($Matches.ContainsKey("rest") -and $null -ne $Matches["rest"]) {
+        $titlePart = $Matches["rest"].TrimStart()
+      } else {
+        $titlePart = ""
+      }
+    }
+
+    if ($pathPart -match '^(?i)(https?|ftp|ftps|mailto|tel|data|file):') {
+      return $match.Value
+    }
+
+    if ($pathPart.StartsWith("#")) {
+      return $match.Value
+    }
+
+    $relativeSourcePath = $pathPart -replace '/', [System.IO.Path]::DirectorySeparatorChar
+    $resolvedSourcePath = if ([System.IO.Path]::IsPathRooted($relativeSourcePath)) {
+      $relativeSourcePath
+    } else {
+      Join-Path $sourceDirectory $relativeSourcePath
+    }
+
+    if (-not (Test-Path -LiteralPath $resolvedSourcePath -PathType Leaf)) {
+      throw "Image file referenced in markdown was not found: $pathPart (resolved from $MarkdownPath)"
+    }
+
+    $resolvedSourcePath = [System.IO.Path]::GetFullPath($resolvedSourcePath)
+    $cacheKey = $resolvedSourcePath.ToLowerInvariant()
+
+    if (-not $stagedBySourcePath.ContainsKey($cacheKey)) {
+      $fileName = [System.IO.Path]::GetFileName($resolvedSourcePath)
+      if ([string]::IsNullOrWhiteSpace($fileName)) {
+        $fileName = "image.bin"
+      }
+
+      $destinationPath = Get-UniqueFilePath -CandidatePath (Join-Path $stagedMediaDirectory $fileName)
+      Copy-Item -LiteralPath $resolvedSourcePath -Destination $destinationPath
+      $stagedBySourcePath[$cacheKey] = "_media/" + [System.IO.Path]::GetFileName($destinationPath)
+    }
+
+    $stagedRelativePath = $stagedBySourcePath[$cacheKey]
+    if ($stagedRelativePath -match '\s') {
+      $stagedRelativePath = "<$stagedRelativePath>"
+    }
+
+    $titleSuffix = if ([string]::IsNullOrWhiteSpace($titlePart)) { "" } else { " $titlePart" }
+    return "![${altText}]($stagedRelativePath$titleSuffix)"
+  })
+}
+
 function Format-DocxTables {
   param([string]$DocxPath)
 
@@ -268,8 +390,11 @@ $resolvedInput = Resolve-InputPath -PathValue $InputFile -DefaultExtension $defa
 $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $OutputFile -DefaultExtension $defaultOutputExtension
 
 $preparedMarkdown = Convert-OffsetPrefixesToStyleSuffix -InputPath $resolvedInput
-$tempInput = Join-Path ([System.IO.Path]::GetTempPath()) ("m2d_" + [System.Guid]::NewGuid().ToString("N") + ".md")
+$tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("m2d_" + [System.Guid]::NewGuid().ToString("N"))
+$tempInput = Join-Path $tempRoot "input.md"
+$preparedMarkdown = Stage-MarkdownImages -Markdown $preparedMarkdown -MarkdownPath $resolvedInput -TempRoot $tempRoot
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
 [System.IO.File]::WriteAllText($tempInput, $preparedMarkdown, $utf8NoBom)
 
 try {
@@ -277,14 +402,15 @@ try {
     -f "markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs" `
     -t "docx" `
     --no-highlight `
+    --resource-path="$tempRoot" `
     --reference-doc="$referenceDoc" `
     --lua-filter="$filterPath" `
     "$tempInput" `
     -o "$resolvedOutput"
 }
 finally {
-  if (Test-Path -LiteralPath $tempInput) {
-    Remove-Item -LiteralPath $tempInput -Force
+  if (Test-Path -LiteralPath $tempRoot) {
+    Remove-Item -LiteralPath $tempRoot -Force -Recurse
   }
 }
 

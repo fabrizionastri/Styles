@@ -66,6 +66,8 @@ In this Contract, capitalised words are defined terms, whose definitions are giv
 
 2.11. "**Collecting Party**" means, in respect of a given Client or Order, the Party that invoices the Client and collects the Revenue Base.
 
+![](_media/contracts.png)
+
 ### Article 3. Object of the Contract
 
 3.1. The purpose of this Contract is to establish a bilateral, activity-based Collaboration between FlexUp and Partner, whereby each Party may contribute to the generation of revenue from Client by performing one or more of the Activities defined in this Contract.
@@ -103,6 +105,8 @@ No Party shall be liable for the debts, defaults, or losses of the other Party s
 3.9. **Independent Invoicing**. Each Party contracts with and invoices Client in its own name and on its own behalf.
 
   The other Party has no direct claim against Client and shall not issue invoices in the name of the other Party unless expressly authorised in writing.
+
+![Contracts](_media/contracts.png)
 
 ### Article 4. Collaboration Activities and Compensation Rates
 
