@@ -291,7 +291,90 @@ function Stage-MarkdownImages {
   })
 }
 
-function Format-DocxTables {
+function Get-PreviousElementSibling {
+  param([System.Xml.XmlNode]$Node)
+  $cursor = $Node.PreviousSibling
+  while ($cursor -and $cursor.NodeType -ne [System.Xml.XmlNodeType]::Element) {
+    $cursor = $cursor.PreviousSibling
+  }
+  return $cursor
+}
+
+function Get-NextElementSibling {
+  param([System.Xml.XmlNode]$Node)
+  $cursor = $Node.NextSibling
+  while ($cursor -and $cursor.NodeType -ne [System.Xml.XmlNodeType]::Element) {
+    $cursor = $cursor.NextSibling
+  }
+  return $cursor
+}
+
+function Test-IsBlankParagraph {
+  param(
+    [System.Xml.XmlNode]$Node,
+    [System.Xml.XmlNamespaceManager]$NamespaceManager
+  )
+
+  if (-not $Node -or $Node.LocalName -ne 'p') {
+    return $false
+  }
+
+  if ($Node.SelectSingleNode('.//w:drawing', $NamespaceManager)) {
+    return $false
+  }
+
+  $texts = $Node.SelectNodes('.//w:t', $NamespaceManager)
+  if ($texts.Count -eq 0) {
+    return $true
+  }
+
+  foreach ($t in $texts) {
+    if (-not [string]::IsNullOrWhiteSpace($t.InnerText)) {
+      return $false
+    }
+  }
+
+  return $true
+}
+
+function New-EmptyWordParagraph {
+  param(
+    [xml]$XmlDocument,
+    [string]$NamespaceUri
+  )
+
+  return $XmlDocument.CreateElement('w', 'p', $NamespaceUri)
+}
+
+function Ensure-BlankParagraphAroundNode {
+  param(
+    [System.Xml.XmlNode]$Node,
+    [xml]$XmlDocument,
+    [System.Xml.XmlNamespaceManager]$NamespaceManager,
+    [string]$NamespaceUri,
+    [ref]$Modified
+  )
+
+  $prev = Get-PreviousElementSibling -Node $Node
+  if (-not (Test-IsBlankParagraph -Node $prev -NamespaceManager $NamespaceManager)) {
+    $blankBefore = New-EmptyWordParagraph -XmlDocument $XmlDocument -NamespaceUri $NamespaceUri
+    $Node.ParentNode.InsertBefore($blankBefore, $Node) | Out-Null
+    $Modified.Value = $true
+  }
+
+  $next = Get-NextElementSibling -Node $Node
+  if (-not (Test-IsBlankParagraph -Node $next -NamespaceManager $NamespaceManager)) {
+    $blankAfter = New-EmptyWordParagraph -XmlDocument $XmlDocument -NamespaceUri $NamespaceUri
+    if ($Node.NextSibling) {
+      $Node.ParentNode.InsertAfter($blankAfter, $Node) | Out-Null
+    } else {
+      $Node.ParentNode.AppendChild($blankAfter) | Out-Null
+    }
+    $Modified.Value = $true
+  }
+}
+
+function Format-DocxLayout {
   param([string]$DocxPath)
 
   Add-Type -AssemblyName System.IO.Compression
@@ -315,17 +398,19 @@ function Format-DocxTables {
     $modified = $false
 
     foreach ($tbl in $xml.SelectNodes('//w:tbl', $ns)) {
-      $modified = $true
-
       # --- Table borders ---
       $tblPr = $tbl.SelectSingleNode('w:tblPr', $ns)
       if (-not $tblPr) {
         $tblPr = $xml.CreateElement('w', 'tblPr', $nsUri)
         $tbl.PrependChild($tblPr) | Out-Null
+        $modified = $true
       }
 
       $old = $tblPr.SelectSingleNode('w:tblBorders', $ns)
-      if ($old) { $tblPr.RemoveChild($old) | Out-Null }
+      if ($old) {
+        $tblPr.RemoveChild($old) | Out-Null
+        $modified = $true
+      }
 
       $borders = $xml.CreateElement('w', 'tblBorders', $nsUri)
       foreach ($side in @('top', 'left', 'bottom', 'right', 'insideH', 'insideV')) {
@@ -337,6 +422,19 @@ function Format-DocxTables {
         $borders.AppendChild($b) | Out-Null
       }
       $tblPr.AppendChild($borders) | Out-Null
+      $modified = $true
+
+      # --- Center table ---
+      $tblJc = $tblPr.SelectSingleNode('w:jc', $ns)
+      if (-not $tblJc) {
+        $tblJc = $xml.CreateElement('w', 'jc', $nsUri)
+        $tblPr.AppendChild($tblJc) | Out-Null
+        $modified = $true
+      }
+      if ($tblJc.GetAttribute('val', $nsUri) -ne 'center') {
+        $null = $tblJc.SetAttribute('val', $nsUri, 'center')
+        $modified = $true
+      }
 
       # --- Header row shading ---
       $firstRow = $tbl.SelectSingleNode('w:tr', $ns)
@@ -347,17 +445,57 @@ function Format-DocxTables {
         if (-not $tcPr) {
           $tcPr = $xml.CreateElement('w', 'tcPr', $nsUri)
           $tc.PrependChild($tcPr) | Out-Null
+          $modified = $true
         }
 
         $oldShd = $tcPr.SelectSingleNode('w:shd', $ns)
-        if ($oldShd) { $tcPr.RemoveChild($oldShd) | Out-Null }
+        if ($oldShd) {
+          $tcPr.RemoveChild($oldShd) | Out-Null
+          $modified = $true
+        }
 
         $shd = $xml.CreateElement('w', 'shd', $nsUri)
         $null = $shd.SetAttribute('val', $nsUri, 'clear')
         $null = $shd.SetAttribute('color', $nsUri, 'auto')
         $null = $shd.SetAttribute('fill', $nsUri, 'F2F2F2')
         $tcPr.AppendChild($shd) | Out-Null
+        $modified = $true
       }
+    }
+
+    # Center all image paragraphs.
+    foreach ($imgPara in $xml.SelectNodes('//w:p[.//w:drawing]', $ns)) {
+      $pPr = $imgPara.SelectSingleNode('w:pPr', $ns)
+      if (-not $pPr) {
+        $pPr = $xml.CreateElement('w', 'pPr', $nsUri)
+        $imgPara.PrependChild($pPr) | Out-Null
+        $modified = $true
+      }
+
+      $jc = $pPr.SelectSingleNode('w:jc', $ns)
+      if (-not $jc) {
+        $jc = $xml.CreateElement('w', 'jc', $nsUri)
+        $pPr.AppendChild($jc) | Out-Null
+        $modified = $true
+      }
+
+      if ($jc.GetAttribute('val', $nsUri) -ne 'center') {
+        $null = $jc.SetAttribute('val', $nsUri, 'center')
+        $modified = $true
+      }
+    }
+
+    # Ensure visible blank lines before and after top-level tables and illustrations.
+    $bodyTargets = @(
+      $xml.SelectNodes('/w:document/w:body/*[self::w:tbl or (self::w:p and .//w:drawing)]', $ns)
+    )
+    foreach ($target in $bodyTargets) {
+      Ensure-BlankParagraphAroundNode `
+        -Node $target `
+        -XmlDocument $xml `
+        -NamespaceManager $ns `
+        -NamespaceUri $nsUri `
+        -Modified ([ref]$modified)
     }
 
     if ($modified) {
@@ -418,6 +556,6 @@ if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
-Format-DocxTables -DocxPath $resolvedOutput
+Format-DocxLayout -DocxPath $resolvedOutput
 
 Write-Output "Created: $resolvedOutput"

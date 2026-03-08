@@ -106,7 +106,7 @@ No Party shall be liable for the debts, defaults, or losses of the other Party s
 
   The other Party has no direct claim against Client and shall not issue invoices in the name of the other Party unless expressly authorised in writing.
 
-![Contracts](_media/contracts.png)
+![](_media/contracts.png)
 
 ### Article 4. Collaboration Activities and Compensation Rates
 
