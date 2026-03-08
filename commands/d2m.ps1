@@ -324,6 +324,122 @@ function Get-UniqueFilePath {
   return $candidate
 }
 
+function Convert-ToMediaFileStem {
+  param(
+    [string]$Value,
+    [string]$Fallback
+  )
+
+  if ($null -eq $Value) {
+    $candidate = ""
+  } else {
+    $candidate = [string]$Value
+  }
+  $candidate = $candidate.ToLowerInvariant()
+  $candidate = $candidate -replace '[^a-z0-9]+', '_'
+  $candidate = $candidate.Trim('_')
+
+  if ([string]::IsNullOrWhiteSpace($candidate)) {
+    return $Fallback
+  }
+
+  return $candidate
+}
+
+function Get-WordImageNameMap {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$DocxPath
+  )
+
+  $map = @{}
+
+  Add-Type -AssemblyName System.IO.Compression
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $zip = [System.IO.Compression.ZipFile]::OpenRead($DocxPath)
+
+  try {
+    $docEntry = $zip.Entries | Where-Object { $_.FullName -eq 'word/document.xml' }
+    if (-not $docEntry) { return $map }
+
+    $docStream = $docEntry.Open()
+    $docReader = New-Object System.IO.StreamReader($docStream)
+    $docXmlRaw = $docReader.ReadToEnd()
+    $docReader.Close()
+    $docStream.Close()
+
+    $docXml = [xml]$docXmlRaw
+    $ns = New-Object System.Xml.XmlNamespaceManager($docXml.NameTable)
+    $ns.AddNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main')
+    $ns.AddNamespace('a', 'http://schemas.openxmlformats.org/drawingml/2006/main')
+    $ns.AddNamespace('r', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships')
+    $ns.AddNamespace('wp', 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing')
+    $ns.AddNamespace('pic', 'http://schemas.openxmlformats.org/drawingml/2006/picture')
+
+    foreach ($drawing in $docXml.SelectNodes('//w:drawing', $ns)) {
+      $blip = $drawing.SelectSingleNode('.//a:blip[@r:embed]', $ns)
+      if (-not $blip) { continue }
+
+      $relId = $blip.GetAttribute('embed', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships')
+      if ([string]::IsNullOrWhiteSpace($relId)) { continue }
+
+      $docPr = $drawing.SelectSingleNode('.//wp:docPr', $ns)
+      $cNvPr = $drawing.SelectSingleNode('.//pic:cNvPr', $ns)
+
+      $descrCandidates = @(
+        $(if ($docPr) { $docPr.GetAttribute('descr') } else { $null }),
+        $(if ($cNvPr) { $cNvPr.GetAttribute('descr') } else { $null })
+      )
+      $nameCandidates = @(
+        $(if ($docPr) { $docPr.GetAttribute('name') } else { $null }),
+        $(if ($cNvPr) { $cNvPr.GetAttribute('name') } else { $null })
+      )
+
+      $chosen = $null
+      foreach ($value in $descrCandidates + $nameCandidates) {
+        if ([string]::IsNullOrWhiteSpace($value)) { continue }
+        if ($value -match '^(?i)(picture|image)\s+\d+$') { continue }
+        $chosen = $value
+        break
+      }
+
+      if ([string]::IsNullOrWhiteSpace($chosen)) { continue }
+      $map[$relId.ToLowerInvariant()] = $chosen
+    }
+  }
+  finally {
+    $zip.Dispose()
+  }
+
+  return $map
+}
+
+function Resolve-TargetMediaPath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$SourcePath,
+
+    [Parameter(Mandatory = $true)]
+    [string]$TargetMediaDirectory,
+
+    [Parameter(Mandatory = $true)]
+    [string]$PreferredFileName
+  )
+
+  $candidate = Join-Path $TargetMediaDirectory $PreferredFileName
+  if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+    return $candidate
+  }
+
+  $sourceHash = (Get-FileHash -LiteralPath $SourcePath -Algorithm SHA256).Hash
+  $candidateHash = (Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash
+  if ($sourceHash -eq $candidateHash) {
+    return $candidate
+  }
+
+  return Get-UniqueFilePath -CandidatePath $candidate
+}
+
 function Get-RelativeMarkdownPath {
   param(
     [Parameter(Mandatory = $true)]
@@ -358,18 +474,24 @@ function Rewrite-ExtractedImageLinks {
     [string]$TargetMediaDirectory,
 
     [Parameter(Mandatory = $true)]
+    [hashtable]$ImageNameMap,
+
+    [Parameter(Mandatory = $true)]
     [string]$OutputPath
   )
 
   $outputDir = Split-Path -Parent $OutputPath
   $copiedPaths = @{}
-  $pattern = [regex]'!\[(?<alt>[^\]]*)\]\((?<target>[^)\r\n]+)\)'
+  $altMarkers = @{}
+  $markerCounter = 0
+  $pattern = [regex]'!\[(?<alt>[^\]]*)\]\((?<target>[^)\r\n]+)\)(?<attrs>\{[^\r\n]*\})?'
 
-  return $pattern.Replace($Markdown, {
+  $rewritten = $pattern.Replace($Markdown, {
     param($match)
 
     $altText = $match.Groups['alt'].Value
     $rawTarget = $match.Groups['target'].Value.Trim()
+    $attrs = $match.Groups['attrs'].Value
 
     if ([string]::IsNullOrWhiteSpace($rawTarget)) {
       return $match.Value
@@ -420,31 +542,109 @@ function Rewrite-ExtractedImageLinks {
         New-Item -ItemType Directory -Path $TargetMediaDirectory -Force | Out-Null
       }
 
-      $fileName = [System.IO.Path]::GetFileName($sourcePath)
-      if ([string]::IsNullOrWhiteSpace($fileName)) {
-        $fileName = "image.bin"
+      $sourceStem = [System.IO.Path]::GetFileNameWithoutExtension($sourcePath)
+      $sourceExt = [System.IO.Path]::GetExtension($sourcePath)
+      if ([string]::IsNullOrWhiteSpace($sourceExt)) {
+        $sourceExt = ".bin"
       }
 
-      $targetPath = Get-UniqueFilePath -CandidatePath (Join-Path $TargetMediaDirectory $fileName)
-      Copy-Item -LiteralPath $sourcePath -Destination $targetPath
+      $nameHint = $null
+      if (-not [string]::IsNullOrWhiteSpace($sourceStem)) {
+        $key = $sourceStem.ToLowerInvariant()
+        if ($ImageNameMap.ContainsKey($key)) {
+          $nameHint = [string]$ImageNameMap[$key]
+        }
+      }
+      $fallbackStem = if ([string]::IsNullOrWhiteSpace($sourceStem)) { "image" } else { $sourceStem.ToLowerInvariant() }
+      $preferredStem = Convert-ToMediaFileStem -Value $nameHint -Fallback $fallbackStem
+      $preferredFileName = "$preferredStem$sourceExt"
+
+      $targetPath = Resolve-TargetMediaPath `
+        -SourcePath $sourcePath `
+        -TargetMediaDirectory $TargetMediaDirectory `
+        -PreferredFileName $preferredFileName
+
+      if (-not (Test-Path -LiteralPath $targetPath -PathType Leaf)) {
+        Copy-Item -LiteralPath $sourcePath -Destination $targetPath
+      }
 
       $relativeTarget = Get-RelativeMarkdownPath -FromDirectory $outputDir -ToPath $targetPath
       $copiedPaths[$cacheKey] = @{
         Path = $relativeTarget
-        Name = [System.IO.Path]::GetFileNameWithoutExtension($targetPath)
       }
     }
 
     $mapped = $copiedPaths[$cacheKey]
-    $newAlt = if ([string]::IsNullOrWhiteSpace($altText)) { $mapped.Name } else { $altText }
     $newTarget = $mapped.Path
     if ($newTarget -match '\s') {
       $newTarget = "<$newTarget>"
     }
 
+    $marker = ""
+    if (-not [string]::IsNullOrWhiteSpace($altText)) {
+      $markerCounter++
+      $altMarkers[$markerCounter] = $altText.Trim()
+      $marker = "<!--codex-img-alt-id:$markerCounter-->"
+    }
+
     $titleSuffix = if ([string]::IsNullOrWhiteSpace($titlePart)) { "" } else { " $titlePart" }
-    return "![${newAlt}]($newTarget$titleSuffix)"
+    return "![]($newTarget$titleSuffix)$attrs$marker"
   })
+
+  if ($altMarkers.Count -eq 0) {
+    return $rewritten
+  }
+
+  $sep = if ($rewritten.Contains("`r`n")) { "`r`n" } else { "`n" }
+  $lines = $rewritten -split $sep, -1
+  $outLines = New-Object 'System.Collections.Generic.List[string]'
+  $markerPattern = [regex]'<!--codex-img-alt-id:(?<id>\d+)-->'
+
+  $i = 0
+  while ($i -lt $lines.Length) {
+    $line = $lines[$i]
+    $markerMatch = $markerPattern.Match($line)
+
+    if ($markerMatch.Success) {
+      $markerId = [int]$markerMatch.Groups['id'].Value
+      $altText = if ($altMarkers.ContainsKey($markerId)) {
+        [string]$altMarkers[$markerId]
+      } else {
+        ""
+      }
+
+      $line = $markerPattern.Replace($line, "")
+      $outLines.Add($line)
+
+      $j = $i + 1
+      $hasLeadingBlank = $false
+      if ($j -lt $lines.Length -and [string]::IsNullOrWhiteSpace($lines[$j])) {
+        $hasLeadingBlank = $true
+        $j++
+      }
+
+      if (-not [string]::IsNullOrWhiteSpace($altText) -and
+          $j -lt $lines.Length -and
+          $lines[$j].Trim() -eq $altText) {
+        $i = $j + 1
+        if ($i -lt $lines.Length -and [string]::IsNullOrWhiteSpace($lines[$i])) {
+          $i++
+        }
+        if ($hasLeadingBlank) {
+          $outLines.Add("")
+        }
+        continue
+      }
+
+      $i++
+      continue
+    }
+
+    $outLines.Add($line)
+    $i++
+  }
+
+  return ($outLines -join $sep)
 }
 
 if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) {
@@ -468,6 +668,7 @@ try {
   New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
 
   $xrefData = Extract-CrossReferences -DocxPath $resolvedInput
+  $imageNameMap = Get-WordImageNameMap -DocxPath $resolvedInput
 
   & pandoc `
     -f "docx+styles" `
@@ -489,6 +690,7 @@ try {
     -Markdown $rendered `
     -ExtractRoot $tempExtract `
     -TargetMediaDirectory $targetMediaDirectory `
+    -ImageNameMap $imageNameMap `
     -OutputPath $resolvedOutput
   $utf8Bom = New-Object System.Text.UTF8Encoding($true)
   [System.IO.File]::WriteAllText($resolvedOutput, $rendered, $utf8Bom)
