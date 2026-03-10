@@ -1,8 +1,12 @@
-# Heading 1
+﻿# Heading 1
 
-Published {.Published}
+::: Published
+Published
+:::
 
-Comments {.Comments}
+::: Comments
+Comments
+:::
 
 ## Heading 2
 
@@ -23,18 +27,33 @@ Normal with a footnote [^1]
 ### Article 1. Article 1
 
 1.1. Article 2
-a) Article 3
+
+  Offset
+  a) Article 3 []{#ref-1-1-a}
     i. Article 4
 
-## Table of contents
+Normal with a reference to Article 1, and to Article 1.1a).
+
+Normal with two index entries: **Apples** and **Oranges**.
 
 # Appendix 1. Appendix 1
 
 ## Section A. Appendix 2
 
-### 1. Appendix 3
+1.  Appendix 3 {.Appendix-3}
+      a) Appendix 4
+        i. Appendix 5
 
-a) Appendix 4
-    i. Appendix 5
+# Appendix 2. Table of contents
+
+# Appendix 3. Index
+
+::: index-1
+Apples 1
+
+Oranges 1
+:::
+
+# Appendix 4. End Notes
 
 [^1]:  End note
