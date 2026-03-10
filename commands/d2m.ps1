@@ -426,18 +426,7 @@ function Resolve-TargetMediaPath {
     [string]$PreferredFileName
   )
 
-  $candidate = Join-Path $TargetMediaDirectory $PreferredFileName
-  if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
-    return $candidate
-  }
-
-  $sourceHash = (Get-FileHash -LiteralPath $SourcePath -Algorithm SHA256).Hash
-  $candidateHash = (Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash
-  if ($sourceHash -eq $candidateHash) {
-    return $candidate
-  }
-
-  return Get-UniqueFilePath -CandidatePath $candidate
+  return (Join-Path $TargetMediaDirectory $PreferredFileName)
 }
 
 function Get-RelativeMarkdownPath {
@@ -485,6 +474,16 @@ function Rewrite-ExtractedImageLinks {
   $altMarkers = @{}
   $markerCounter = 0
   $pattern = [regex]'!\[(?<alt>[^\]]*)\]\((?<target>[^)\r\n]+)\)(?<attrs>\{[^\r\n]*\})?'
+  $existingByHash = @{}
+
+  if (Test-Path -LiteralPath $TargetMediaDirectory -PathType Container) {
+    foreach ($existingFile in Get-ChildItem -LiteralPath $TargetMediaDirectory -File) {
+      $existingHash = (Get-FileHash -LiteralPath $existingFile.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+      if (-not $existingByHash.ContainsKey($existingHash)) {
+        $existingByHash[$existingHash] = $existingFile.Name
+      }
+    }
+  }
 
   $rewritten = $pattern.Replace($Markdown, {
     param($match)
@@ -548,25 +547,33 @@ function Rewrite-ExtractedImageLinks {
         $sourceExt = ".bin"
       }
 
-      $nameHint = $null
-      if (-not [string]::IsNullOrWhiteSpace($sourceStem)) {
-        $key = $sourceStem.ToLowerInvariant()
-        if ($ImageNameMap.ContainsKey($key)) {
-          $nameHint = [string]$ImageNameMap[$key]
-        }
+      $sourceHash = (Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash.ToLowerInvariant()
+      $preferredFileName = $null
+
+      if ($existingByHash.ContainsKey($sourceHash)) {
+        $preferredFileName = [string]$existingByHash[$sourceHash]
       }
-      $fallbackStem = if ([string]::IsNullOrWhiteSpace($sourceStem)) { "image" } else { $sourceStem.ToLowerInvariant() }
-      $preferredStem = Convert-ToMediaFileStem -Value $nameHint -Fallback $fallbackStem
-      $preferredFileName = "$preferredStem$sourceExt"
+
+      if ([string]::IsNullOrWhiteSpace($preferredFileName)) {
+        $nameHint = $null
+        if (-not [string]::IsNullOrWhiteSpace($sourceStem)) {
+          $key = $sourceStem.ToLowerInvariant()
+          if ($ImageNameMap.ContainsKey($key)) {
+            $nameHint = [string]$ImageNameMap[$key]
+          }
+        }
+        $fallbackStem = if ([string]::IsNullOrWhiteSpace($sourceStem)) { "image" } else { $sourceStem.ToLowerInvariant() }
+        $preferredStem = Convert-ToMediaFileStem -Value $nameHint -Fallback $fallbackStem
+        $preferredFileName = "$preferredStem$sourceExt"
+      }
 
       $targetPath = Resolve-TargetMediaPath `
         -SourcePath $sourcePath `
         -TargetMediaDirectory $TargetMediaDirectory `
         -PreferredFileName $preferredFileName
 
-      if (-not (Test-Path -LiteralPath $targetPath -PathType Leaf)) {
-        Copy-Item -LiteralPath $sourcePath -Destination $targetPath
-      }
+      Copy-Item -LiteralPath $sourcePath -Destination $targetPath -Force
+      $existingByHash[$sourceHash] = [System.IO.Path]::GetFileName($targetPath)
 
       $relativeTarget = Get-RelativeMarkdownPath -FromDirectory $outputDir -ToPath $targetPath
       $copiedPaths[$cacheKey] = @{
@@ -672,7 +679,7 @@ try {
 
   & pandoc `
     -f "docx+styles" `
-    -t "markdown+fenced_divs" `
+    -t "markdown+fenced_divs-smart" `
     --wrap=none `
     --extract-media="$tempExtract" `
     --lua-filter="$filterPath" `
