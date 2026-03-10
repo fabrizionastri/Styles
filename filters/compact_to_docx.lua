@@ -61,7 +61,7 @@ local function alias_to_style(alias)
 end
 
 local function inlines_from_markdown(text)
-  local doc = pandoc.read(text, "markdown")
+  local doc = pandoc.read(text, "markdown-smart")
   if #doc.blocks == 0 then
     return pandoc.List:new()
   end
@@ -74,7 +74,7 @@ end
 
 local function inlines_to_markdown_line(inlines)
   local tmp_doc = pandoc.Pandoc({ pandoc.Plain(inlines) }, pandoc.Meta({}))
-  local txt = pandoc.write(tmp_doc, "markdown")
+  local txt = pandoc.write(tmp_doc, "markdown-smart")
   txt = txt:gsub("\r\n", "\n")
   txt = trim(txt:gsub("\n+$", ""))
   txt = txt:gsub("%s*\n%s*", " ")

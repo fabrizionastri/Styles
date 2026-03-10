@@ -699,8 +699,11 @@ try {
     -TargetMediaDirectory $targetMediaDirectory `
     -ImageNameMap $imageNameMap `
     -OutputPath $resolvedOutput
-  $utf8Bom = New-Object System.Text.UTF8Encoding($true)
-  [System.IO.File]::WriteAllText($resolvedOutput, $rendered, $utf8Bom)
+  if (-not ($rendered.EndsWith("`n") -or $rendered.EndsWith("`r"))) {
+    $newline = if ($rendered.Contains("`r`n")) { "`r`n" } else { "`n" }
+    $rendered += $newline
+  }
+  [System.IO.File]::WriteAllText($resolvedOutput, $rendered, $utf8NoBom)
 }
 finally {
   if (Test-Path -LiteralPath $tempRoot) {

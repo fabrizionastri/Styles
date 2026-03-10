@@ -537,7 +537,7 @@ New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
 
 try {
   & pandoc `
-    -f "markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs" `
+    -f "markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart" `
     -t "docx" `
     --no-highlight `
     --resource-path="$tempRoot" `

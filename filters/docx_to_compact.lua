@@ -130,7 +130,7 @@ local function append_suffix_class(inlines, alias)
 end
 
 local function inlines_from_markdown(text)
-  local doc = pandoc.read(text, "markdown")
+  local doc = pandoc.read(text, "markdown-smart")
   if #doc.blocks == 0 then
     return pandoc.List:new()
   end
@@ -167,6 +167,14 @@ local function clean_inlines(inlines, state, convert_blocks)
     elseif inl.t == "Note" then
       local note_blocks = convert_blocks(inl.content, state)
       out:insert(pandoc.Note(note_blocks))
+    elseif inl.t == "Quoted" then
+      local q = inl.quotetype == "DoubleQuote" and '"' or "'"
+      local inner = clean_inlines(inl.content, state, convert_blocks)
+      out:insert(pandoc.Str(q))
+      for _, s in ipairs(inner) do
+        out:insert(s)
+      end
+      out:insert(pandoc.Str(q))
     elseif inl.t == "SoftBreak" or inl.t == "LineBreak" then
       out:insert(pandoc.Space())
     else
@@ -212,7 +220,7 @@ end
 
 local function inlines_to_markdown_line(inlines)
   local tmp_doc = pandoc.Pandoc({ pandoc.Plain(inlines) }, pandoc.Meta({}))
-  local txt = pandoc.write(tmp_doc, "markdown")
+  local txt = pandoc.write(tmp_doc, "markdown-smart")
   txt = txt:gsub("\r\n", "\n")
   txt = trim(txt:gsub("\n+$", ""))
   txt = txt:gsub("%s*\n%s*", " ")
@@ -459,17 +467,66 @@ local function convert_blocks(blocks, state)
     end
 
     header_cells = normalize_row(header_cells)
-    lines[#lines + 1] = "| " .. table.concat(header_cells, " | ") .. " |"
+    local body_cells = {}
+    for i = start_body_index, #body_rows do
+      body_cells[#body_cells + 1] = normalize_row(table_row_to_cells(body_rows[i]))
+    end
+
+    local function display_width(text)
+      local value = text or ""
+      if pandoc.text and pandoc.text.len then
+        return pandoc.text.len(value)
+      end
+      return #value
+    end
+
+    local function right_pad(text, target_width)
+      local value = text or ""
+      local missing = target_width - display_width(value)
+      if missing > 0 then
+        return value .. string.rep(" ", missing)
+      end
+      return value
+    end
+
+    local col_widths = {}
+    local function observe_widths(row)
+      for i = 1, col_count do
+        local width = display_width(row[i] or " ")
+        if not col_widths[i] or width > col_widths[i] then
+          col_widths[i] = width
+        end
+      end
+    end
+
+    observe_widths(header_cells)
+    for _, row in ipairs(body_cells) do
+      observe_widths(row)
+    end
+    for i = 1, col_count do
+      if col_widths[i] < 3 then
+        col_widths[i] = 3
+      end
+    end
+
+    local function render_row(row)
+      local rendered = {}
+      for i = 1, col_count do
+        rendered[#rendered + 1] = right_pad(row[i] or " ", col_widths[i])
+      end
+      return "| " .. table.concat(rendered, " | ") .. " |"
+    end
+
+    lines[#lines + 1] = render_row(header_cells)
 
     local sep = {}
-    for _ = 1, col_count do
-      sep[#sep + 1] = "---"
+    for i = 1, col_count do
+      sep[#sep + 1] = string.rep("-", col_widths[i])
     end
     lines[#lines + 1] = "| " .. table.concat(sep, " | ") .. " |"
 
-    for i = start_body_index, #body_rows do
-      local cells = normalize_row(table_row_to_cells(body_rows[i]))
-      lines[#lines + 1] = "| " .. table.concat(cells, " | ") .. " |"
+    for _, row in ipairs(body_cells) do
+      lines[#lines + 1] = render_row(row)
     end
 
     return pandoc.RawBlock("markdown", "\n" .. table.concat(lines, "\n"))
