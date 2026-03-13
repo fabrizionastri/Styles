@@ -1,175 +1,87 @@
 Sub Clean_Contract_SC()
-'
-' Clean_Contract_SC Macro
-' Normalizes spacing and applies color formatting to template tags:
-'   {{ ... }} = Blue
-'   {% ... %} = Green
-'   { ... }   = Grey
-'
+    ' Normalizes spacing and applies color formatting/NoProofing to template tags:
+    '   {{ ... }} and ‹ ... › = Blue + No Spellcheck → auto & manual data tags)
+    '   {% ... %} and [ ... ] = Green + No Spellcheck → auto & manual logic tags)
+    '   {? ... ?}   = Grey  → comments, to be removed before finalizing contract
 
-    ' ===== STEP 1: Normalize spacing for {{ }} =====
+    Dim rng As Range
+    Set rng = ActiveDocument.Content
 
-    Selection.Find.ClearFormatting
-    Selection.Find.Replacement.ClearFormatting
-
-    ' Add space after {{
-    With Selection.Find
-        .Text = "{{"
-        .Replacement.Text = "{{ "
+    ' ===== STEP 1: Normalize spacing for {{ }} and {% %} =====
+    ' (Standardizing spacing first ensures the wildcards in Step 3 catch everything)
+    
+    With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
         .Forward = True
         .Wrap = wdFindContinue
         .Format = False
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = False
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-
-    ' Replace [ and < by ‹
-    With Selection.Find
-        .Text = "["
-        .Replacement.Text = "‹"
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-
-    With Selection.Find
-        .Text = "<"
-        .Replacement.Text = "‹"
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-
-    ' Replace ] and > by ›
-    With Selection.Find
-        .Text = "]"
-        .Replacement.Text = "›"
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-    
-    With Selection.Find
-        .Text = ">"
-        .Replacement.Text = "›"
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-
-    ' Remove double space after {{
-    With Selection.Find
-        .Text = "{{  "
+        
+        ' Normalize {{
+        .Text = "{{"
         .Replacement.Text = "{{ "
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-
-    ' Add space before }}
-    With Selection.Find
+        .Execute Replace:=wdReplaceAll
+        
+        ' Normalize }}
         .Text = "}}"
         .Replacement.Text = " }}"
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
+        .Execute Replace:=wdReplaceAll
 
-    ' Remove double space before }}
-    With Selection.Find
-        .Text = "  }}"
-        .Replacement.Text = " }}"
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-
-    ' ===== STEP 2: Normalize spacing for {% %} =====
-
-    ' Add space after {%
-    With Selection.Find
-        .Text = "{%"
-        .Replacement.Text = "{% "
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-
-    ' Remove double space after {%
-    With Selection.Find
-        .Text = "{%  "
-        .Replacement.Text = "{% "
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-
-    ' Add space before %}
-    With Selection.Find
+        
+        ' Normalize %}
         .Text = "%}"
         .Replacement.Text = " %}"
+        .Execute Replace:=wdReplaceAll
+
+        ' Normalize {%
+        .Text = "{%"
+        .Replacement.Text = "{% "
+        .Execute Replace:=wdReplaceAll
+
+        ' Remplace double spaces with single spaces (in case of multiple tags)
+        .Text = "  "
+        .Replacement.Text = " "
+        .Execute Replace:=wdReplaceAll
+        
     End With
-    Selection.Find.Execute Replace:=wdReplaceAll
 
-    ' Remove double space before %}
-    With Selection.Find
-        .Text = "  %}"
-        .Replacement.Text = " %}"
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
+    ' ===== STEP 2: Apply Colors and Disable Spellcheck (NoProofing) =====
 
-    ' ===== STEP 3: Apply colors (grey first, then blue/green overwrite) =====
+    ' --- Grey: { ... } (Single braces - No proofing changes) ---
+    Call ApplyTagFormat(rng, "\{ ?* \}", RGB(128, 128, 128), False)
 
-    ' --- Grey: { ... } (single braces with spaces) ---
-    Selection.Find.ClearFormatting
-    Selection.Find.Replacement.ClearFormatting
-    Selection.Find.Replacement.Font.Color = RGB(128, 128, 128)
+    ' --- Blue: {{ ... }} (No Spellcheck) ---
+    Call ApplyTagFormat(rng, "\{\{?*\}\}", wdColorBlue, True)
 
-    With Selection.Find
-        .Text = "\{ ?* \}"
-        .Replacement.Text = ""
-        .Forward = True
-        .Wrap = wdFindContinue
-        .Format = True
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = True
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
+    ' --- Blue: ‹ ... › (No Spellcheck) ---
+    Call ApplyTagFormat(rng, "‹*›", wdColorBlue, True)
 
-    ' --- Blue: {{ ... }} ---
-    Selection.Find.ClearFormatting
-    Selection.Find.Replacement.ClearFormatting
-    Selection.Find.Replacement.Font.Color = wdColorBlue
+    ' --- Green: {% ... %} (No Spellcheck) ---
+    Call ApplyTagFormat(rng, "\{\%?*\%\}", RGB(0, 176, 80), True)
 
-    With Selection.Find
-        .Text = "\{\{?*\}\}"
-        .Replacement.Text = ""
-        .Forward = True
-        .Wrap = wdFindContinue
-        .Format = True
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = True
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
+    ' --- Green: [ ... ] (No Spellcheck) ---
+    Call ApplyTagFormat(rng, "\[?*\]", RGB(0, 176, 80), True)
 
-    ' --- Green: {% ... %} ---
-    Selection.Find.ClearFormatting
-    Selection.Find.Replacement.ClearFormatting
-    Selection.Find.Replacement.Font.Color = RGB(0, 176, 80)
-
-    With Selection.Find
-        .Text = "\{\%?*\%\}"
-        .Replacement.Text = ""
-        .Forward = True
-        .Wrap = wdFindContinue
-        .Format = True
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = True
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
-
-    ' Reset find settings
-    Selection.Find.ClearFormatting
-    Selection.Find.Replacement.ClearFormatting
-
-
-    '=== Apply British English language setting to entire document ===
+    ' Finalize: Set document language
     ActiveDocument.Content.LanguageID = wdEnglishUK
+    
+    MsgBox "Cleaning Complete. Logic fields are now excluded from Spellcheck.", vbInformation
+End Sub
 
-
+' Helper Subroutine to keep the main code clean
+Sub ApplyTagFormat(ByRef rng As Range, findText As String, textColor As Long, disableProofing As Boolean)
+    With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = findText
+        .Replacement.Text = "" ' Keep found text
+        .Replacement.Font.Color = textColor
+        .Replacement.NoProofing = disableProofing
+        
+        .Forward = True
+        .Wrap = wdFindContinue
+        .Format = True
+        .MatchWildcards = True
+        .Execute Replace:=wdReplaceAll
+    End With
 End Sub
