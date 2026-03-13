@@ -21,8 +21,60 @@ local BULLET_STYLE_BY_LEVEL = {
   [3] = "List 3",
 }
 
+local DEFAULT_XREF_SWITCHES = "\\h\\n"
+local XREF_MARKER_PREFIX = "[[XRF:"
+local XREF_MARKER_SUFFIX = "]]"
+
 local function trim(s)
   return (s:gsub("^%s+", ""):gsub("%s+$", ""))
+end
+
+local function normalize_xref_switches(raw)
+  local tokens = {}
+  if raw then
+    for token in raw:gmatch("\\%a+") do
+      tokens[#tokens + 1] = token
+    end
+  end
+
+  if #tokens == 0 then
+    return nil
+  end
+
+  return table.concat(tokens, "")
+end
+
+local function mark_xref_link(link)
+  local target = link.target or ""
+  if not target:match("^#") then
+    return link
+  end
+
+  local target_id = target:sub(2)
+  local title = link.title or ""
+  local switches = nil
+
+  local explicit = title:match("^xref:%s*(.-)%s*$")
+  if explicit ~= nil then
+    switches = normalize_xref_switches(explicit)
+    if not switches then
+      switches = DEFAULT_XREF_SWITCHES
+    end
+  elseif target_id:match("^_Ref") or target_id:match("^ref%-") then
+    switches = DEFAULT_XREF_SWITCHES
+  end
+
+  if not switches then
+    return link
+  end
+
+  local marker = XREF_MARKER_PREFIX .. switches .. XREF_MARKER_SUFFIX
+  local marked = pandoc.List:new({ pandoc.Str(marker) })
+  for _, inl in ipairs(link.content) do
+    marked:insert(inl)
+  end
+
+  return pandoc.Link(marked, link.target, "", link.attr)
 end
 
 local function enum_name(v)
@@ -585,6 +637,10 @@ local function convert_blocks(blocks, state, ctx)
 end
 
 function Pandoc(doc)
+  doc = doc:walk({
+    Link = mark_xref_link,
+  })
+
   local state = { in_appendix = false }
   local blocks = convert_blocks(doc.blocks, state, { bullet_depth = 0 })
   return pandoc.Pandoc(blocks, doc.meta)

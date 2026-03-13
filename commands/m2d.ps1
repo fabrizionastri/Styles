@@ -374,8 +374,314 @@ function Ensure-BlankParagraphAroundNode {
   }
 }
 
+function Test-IsWordBookmarkName {
+  param([string]$Name)
+
+  if ([string]::IsNullOrWhiteSpace($Name)) {
+    return $false
+  }
+
+  return $Name -match '^[A-Za-z_][A-Za-z0-9_]{0,39}$'
+}
+
+function Get-PandocBookmarkName {
+  param([string]$Identifier)
+
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($Identifier)
+  $sha1 = [System.Security.Cryptography.SHA1]::Create()
+  try {
+    $hash = $sha1.ComputeHash($bytes)
+  }
+  finally {
+    $sha1.Dispose()
+  }
+
+  $hex = (($hash | ForEach-Object { $_.ToString("x2") }) -join "")
+  if ($hex.Length -gt 1) {
+    $hex = $hex.Substring(1)
+  }
+  return "X" + $hex
+}
+
+function Get-MarkdownBookmarkRenameMap {
+  param([string]$Markdown)
+
+  $map = @{}
+  $ids = New-Object 'System.Collections.Generic.HashSet[string]'
+
+  foreach ($m in [regex]::Matches($Markdown, '\{#([^\s\}]+)\}')) {
+    $null = $ids.Add($m.Groups[1].Value)
+  }
+
+  foreach ($m in [regex]::Matches($Markdown, '\]\(#([^\s\)]+)')) {
+    $id = $m.Groups[1].Value.Trim()
+    if ($id.StartsWith("<") -and $id.EndsWith(">")) {
+      $id = $id.Substring(1, $id.Length - 2)
+    }
+    if ($id -match '^(?i)(https?|ftp|ftps|mailto|tel|data|file):') {
+      continue
+    }
+    if ($id.StartsWith("/")) {
+      continue
+    }
+    $null = $ids.Add($id)
+  }
+
+  foreach ($id in $ids) {
+    if (-not (Test-IsWordBookmarkName -Name $id)) {
+      continue
+    }
+    $hashed = Get-PandocBookmarkName -Identifier $id
+    $map[$hashed] = $id
+  }
+
+  return $map
+}
+
+function Normalize-RefFieldSwitches {
+  param([string]$RawSwitches)
+
+  $tokens = [regex]::Matches($RawSwitches, '\\[A-Za-z]+') | ForEach-Object { $_.Value }
+  if ($tokens.Count -eq 0) {
+    return '\h \n'
+  }
+
+  return ($tokens -join ' ')
+}
+
+function New-WordFieldControlRun {
+  param(
+    [xml]$XmlDocument,
+    [string]$NamespaceUri,
+    [string]$FieldType
+  )
+
+  $run = $XmlDocument.CreateElement('w', 'r', $NamespaceUri)
+  $fldChar = $XmlDocument.CreateElement('w', 'fldChar', $NamespaceUri)
+  $null = $fldChar.SetAttribute('fldCharType', $NamespaceUri, $FieldType)
+  $run.AppendChild($fldChar) | Out-Null
+  return $run
+}
+
+function New-WordInstructionRun {
+  param(
+    [xml]$XmlDocument,
+    [string]$NamespaceUri,
+    [string]$Instruction
+  )
+
+  $run = $XmlDocument.CreateElement('w', 'r', $NamespaceUri)
+  $instr = $XmlDocument.CreateElement('w', 'instrText', $NamespaceUri)
+  $null = $instr.SetAttribute('xml:space', 'preserve')
+  $instr.InnerText = $Instruction
+  $run.AppendChild($instr) | Out-Null
+  return $run
+}
+
+function New-WordTextRun {
+  param(
+    [xml]$XmlDocument,
+    [string]$NamespaceUri,
+    [string]$Text
+  )
+
+  $run = $XmlDocument.CreateElement('w', 'r', $NamespaceUri)
+  $textNode = $XmlDocument.CreateElement('w', 't', $NamespaceUri)
+  if ($Text.StartsWith(" ") -or $Text.EndsWith(" ") -or $Text.Contains("  ")) {
+    $null = $textNode.SetAttribute('xml:space', 'preserve')
+  }
+  $textNode.InnerText = $Text
+  $run.AppendChild($textNode) | Out-Null
+  return $run
+}
+
+function Test-RunHasVisibleContent {
+  param(
+    [System.Xml.XmlNode]$RunNode,
+    [System.Xml.XmlNamespaceManager]$NamespaceManager
+  )
+
+  if ($RunNode.SelectSingleNode('.//w:drawing', $NamespaceManager)) {
+    return $true
+  }
+  if ($RunNode.SelectSingleNode('.//w:tab', $NamespaceManager)) {
+    return $true
+  }
+  if ($RunNode.SelectSingleNode('.//w:br', $NamespaceManager)) {
+    return $true
+  }
+
+  foreach ($t in $RunNode.SelectNodes('.//w:t', $NamespaceManager)) {
+    if (-not [string]::IsNullOrEmpty($t.InnerText)) {
+      return $true
+    }
+  }
+
+  return $false
+}
+
+function Get-TextFromRuns {
+  param(
+    [System.Collections.Generic.List[System.Xml.XmlNode]]$Runs,
+    [System.Xml.XmlNamespaceManager]$NamespaceManager
+  )
+
+  $parts = New-Object 'System.Collections.Generic.List[string]'
+  foreach ($run in $Runs) {
+    foreach ($t in @($run.SelectNodes('.//w:t', $NamespaceManager))) {
+      $parts.Add($t.InnerText)
+    }
+  }
+  return ($parts -join '')
+}
+
+function Try-ExtractMarkdownLinkLabel {
+  param([string]$Text)
+
+  if ([string]::IsNullOrWhiteSpace($Text)) {
+    return $null
+  }
+
+  $trimmed = $Text.Trim()
+  if ($trimmed -match '^\[(?<label>.+)\]\(#.+\)$') {
+    return $Matches['label']
+  }
+
+  return $null
+}
+
+function Rename-BookmarksAndConvertXrefLinks {
+  param(
+    [xml]$XmlDocument,
+    [System.Xml.XmlNamespaceManager]$NamespaceManager,
+    [string]$NamespaceUri,
+    [hashtable]$BookmarkRenameMap
+  )
+
+  $modified = $false
+
+  foreach ($bm in $XmlDocument.SelectNodes('//w:bookmarkStart[@w:name]', $NamespaceManager)) {
+    $name = $bm.GetAttribute('name', $NamespaceUri)
+    if ($BookmarkRenameMap.ContainsKey($name)) {
+      $null = $bm.SetAttribute('name', $NamespaceUri, [string]$BookmarkRenameMap[$name])
+      $modified = $true
+    }
+  }
+
+  foreach ($link in $XmlDocument.SelectNodes('//w:hyperlink[@w:anchor]', $NamespaceManager)) {
+    $anchor = $link.GetAttribute('anchor', $NamespaceUri)
+    if ($BookmarkRenameMap.ContainsKey($anchor)) {
+      $null = $link.SetAttribute('anchor', $NamespaceUri, [string]$BookmarkRenameMap[$anchor])
+      $modified = $true
+    }
+  }
+
+  $bookmarkNames = @{}
+  foreach ($bm in $XmlDocument.SelectNodes('//w:bookmarkStart[@w:name]', $NamespaceManager)) {
+    $bookmarkNames[$bm.GetAttribute('name', $NamespaceUri)] = $true
+  }
+
+  $hyperlinks = @($XmlDocument.SelectNodes('//w:hyperlink[@w:anchor]', $NamespaceManager))
+  foreach ($hyperlink in $hyperlinks) {
+    $anchor = $hyperlink.GetAttribute('anchor', $NamespaceUri)
+    if ([string]::IsNullOrWhiteSpace($anchor)) {
+      continue
+    }
+
+    $textNodes = @($hyperlink.SelectNodes('.//w:t', $NamespaceManager))
+    if ($textNodes.Count -eq 0) {
+      continue
+    }
+
+    $fullText = ($textNodes | ForEach-Object { $_.InnerText }) -join ''
+    if ($fullText -notmatch '^\[\[XRF:(?<switches>[^\]]*)\]\]') {
+      continue
+    }
+
+    $switchesRaw = $Matches['switches']
+    $markerText = "[[XRF:$switchesRaw]]"
+
+    $displayRuns = New-Object 'System.Collections.Generic.List[System.Xml.XmlNode]'
+    foreach ($child in @($hyperlink.ChildNodes)) {
+      if ($child.NodeType -eq [System.Xml.XmlNodeType]::Element -and $child.LocalName -eq 'r') {
+        $displayRuns.Add($child.CloneNode($true))
+      }
+    }
+
+    $remaining = $markerText.Length
+    foreach ($run in $displayRuns) {
+      foreach ($t in @($run.SelectNodes('.//w:t', $NamespaceManager))) {
+        if ($remaining -le 0) { break }
+        $text = $t.InnerText
+        if ($text.Length -le $remaining) {
+          $t.InnerText = ''
+          $remaining -= $text.Length
+        } else {
+          $t.InnerText = $text.Substring($remaining)
+          $remaining = 0
+        }
+      }
+      if ($remaining -le 0) { break }
+    }
+
+    $cleanRuns = New-Object 'System.Collections.Generic.List[System.Xml.XmlNode]'
+    foreach ($run in $displayRuns) {
+      if (Test-RunHasVisibleContent -RunNode $run -NamespaceManager $NamespaceManager) {
+        $cleanRuns.Add($run)
+      }
+    }
+
+    if ($cleanRuns.Count -eq 0) {
+      $fallback = $fullText.Substring([Math]::Min($markerText.Length, $fullText.Length))
+      if ([string]::IsNullOrWhiteSpace($fallback)) {
+        $fallback = $anchor
+      }
+      $cleanRuns.Add((New-WordTextRun -XmlDocument $XmlDocument -NamespaceUri $NamespaceUri -Text $fallback))
+    }
+
+    $displayText = Get-TextFromRuns -Runs $cleanRuns -NamespaceManager $NamespaceManager
+    $label = Try-ExtractMarkdownLinkLabel -Text $displayText
+    if (-not [string]::IsNullOrWhiteSpace($label)) {
+      $cleanRuns.Clear()
+      $cleanRuns.Add((New-WordTextRun -XmlDocument $XmlDocument -NamespaceUri $NamespaceUri -Text $label))
+    }
+
+    $replacementNodes = New-Object 'System.Collections.Generic.List[System.Xml.XmlNode]'
+    if ($bookmarkNames.ContainsKey($anchor)) {
+      $switches = Normalize-RefFieldSwitches -RawSwitches $switchesRaw
+      $instruction = " REF $anchor"
+      if (-not [string]::IsNullOrWhiteSpace($switches)) {
+        $instruction += " $switches"
+      }
+      $instruction += " "
+
+      $replacementNodes.Add((New-WordFieldControlRun -XmlDocument $XmlDocument -NamespaceUri $NamespaceUri -FieldType 'begin'))
+      $replacementNodes.Add((New-WordInstructionRun -XmlDocument $XmlDocument -NamespaceUri $NamespaceUri -Instruction $instruction))
+      $replacementNodes.Add((New-WordFieldControlRun -XmlDocument $XmlDocument -NamespaceUri $NamespaceUri -FieldType 'separate'))
+      foreach ($run in $cleanRuns) {
+        $replacementNodes.Add($run)
+      }
+      $replacementNodes.Add((New-WordFieldControlRun -XmlDocument $XmlDocument -NamespaceUri $NamespaceUri -FieldType 'end'))
+    } else {
+      $replacementNodes.Add((New-WordTextRun -XmlDocument $XmlDocument -NamespaceUri $NamespaceUri -Text "[BROKEN_XREF:#$anchor]"))
+    }
+
+    $parent = $hyperlink.ParentNode
+    foreach ($node in $replacementNodes) {
+      $parent.InsertBefore($node, $hyperlink) | Out-Null
+    }
+    $parent.RemoveChild($hyperlink) | Out-Null
+    $modified = $true
+  }
+
+  return $modified
+}
+
 function Format-DocxLayout {
-  param([string]$DocxPath)
+  param(
+    [string]$DocxPath,
+    [string]$SourceMarkdown
+  )
 
   Add-Type -AssemblyName System.IO.Compression
   Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -396,6 +702,10 @@ function Format-DocxLayout {
     $ns.AddNamespace('w', $nsUri)
 
     $modified = $false
+    $bookmarkRenameMap = Get-MarkdownBookmarkRenameMap -Markdown $SourceMarkdown
+    if (Rename-BookmarksAndConvertXrefLinks -XmlDocument $xml -NamespaceManager $ns -NamespaceUri $nsUri -BookmarkRenameMap $bookmarkRenameMap) {
+      $modified = $true
+    }
 
     foreach ($tbl in $xml.SelectNodes('//w:tbl', $ns)) {
       # --- Table borders ---
@@ -556,6 +866,6 @@ if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
-Format-DocxLayout -DocxPath $resolvedOutput
+Format-DocxLayout -DocxPath $resolvedOutput -SourceMarkdown $preparedMarkdown
 
 Write-Output "Created: $resolvedOutput"

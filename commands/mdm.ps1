@@ -51,6 +51,16 @@ function Sync-TerminalLineBreaks {
   $sourceText = [System.IO.File]::ReadAllText($SourcePath, $utf8NoBom)
   $targetText = [System.IO.File]::ReadAllText($TargetPath, $utf8NoBom)
 
+  $sourceUsesCrLf = $sourceText.Contains("`r`n")
+  $targetNormalized = $targetText -replace "`r`n", "`n"
+  $targetNormalized = $targetNormalized -replace "`r", "`n"
+
+  if ($sourceUsesCrLf) {
+    $targetText = $targetNormalized -replace "`n", "`r`n"
+  } else {
+    $targetText = $targetNormalized
+  }
+
   $sourceSuffix = Get-TrailingLineBreakSuffix -Text $sourceText
   $targetCore = $targetText.TrimEnd("`r", "`n")
   $normalized = $targetCore + $sourceSuffix

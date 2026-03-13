@@ -123,7 +123,7 @@ function Extract-CrossReferences {
   foreach ($para in $xml.SelectNodes('//w:p', $ns)) {
     foreach ($bm in $para.SelectNodes('.//w:bookmarkStart', $ns)) {
       $name = $bm.GetAttribute('name', $nsUri)
-      if ($name -and $name -like '_Ref*') {
+      if ($name -and $name -notmatch '^_GoBack') {
         $texts = $para.SelectNodes('.//w:t', $ns)
         $paraText = ($texts | ForEach-Object { $_.InnerText }) -join ''
         $bookmarks[$name] = @{ ParagraphText = $paraText.Trim() }
@@ -153,7 +153,7 @@ function Extract-CrossReferences {
           $inDisplay = $true
         }
         elseif ($fcType -eq 'end') {
-          if ($depth -eq 1 -and $instrAccum -match 'REF\s+(_Ref\w+)(.*)') {
+          if ($depth -eq 1 -and $instrAccum -match '(?i)\bREF\s+([A-Za-z_][A-Za-z0-9_]*)\b(.*)') {
             $null = $refs.Add(@{
               BookmarkName = $Matches[1]
               DisplayText  = $displayAccum.Trim()
@@ -187,14 +187,25 @@ function Find-AnchorLine {
     [string]$DisplayText
   )
 
-  $remaining = $DisplayText
+  $remaining = $DisplayText.Trim()
+  $hadArticlePrefix = $false
+
+  if ($remaining -match '^(?i)Article\s+(.+)$') {
+    $hadArticlePrefix = $true
+    $remaining = $Matches[1].Trim()
+  }
+
   $patterns = @()
 
-  if ($remaining -match '^(\d+\.\d+)(.*)$') {
+  if ($remaining -match '^(\d+\.\d+)\.?(.*)$') {
     $num = $Matches[1]
     $remaining = $Matches[2]
     $escaped = [regex]::Escape($num)
-    $patterns += "^${escaped}\.?\s"
+    if ($hadArticlePrefix) {
+      $patterns += "^(?:#{1,6}\s+)?Article\s+${escaped}\.?\b"
+    } else {
+      $patterns += "^${escaped}\.?\s"
+    }
   }
   else {
     return -1
@@ -250,21 +261,57 @@ function Add-CrossReferences {
 
   if ($refsByBookmark.Count -eq 0) { return $Markdown }
 
+  function Convert-SwitchesToMarkdownXref {
+    param([string]$Switches)
+
+    $tokens = [regex]::Matches($Switches, '\\[A-Za-z]+') | ForEach-Object { $_.Value }
+    if ($tokens.Count -eq 0) {
+      return '\h\n'
+    }
+    return ($tokens -join '')
+  }
+
+  function Normalize-XrefDisplayText {
+    param([string]$DisplayText)
+
+    $text = if ($null -eq $DisplayText) { "" } else { $DisplayText.Trim() }
+    if ([string]::IsNullOrWhiteSpace($text)) {
+      return ""
+    }
+
+    # Defensive normalization: some editors/renderers may substitute square brackets.
+    $text = $text.Replace('‹', '[').Replace('›', ']')
+
+    if ($text -match '\\?\[(?<label>[^\]]+)\]\\?\]\(#') {
+      return $Matches['label'].Trim()
+    }
+
+    return $text
+  }
+
   $anchorMap = @{}
   foreach ($bmName in $refsByBookmark.Keys) {
-    $display = $refsByBookmark[$bmName][0].DisplayText
-    $anchorMap[$bmName] = ConvertTo-AnchorId $display
+    $display = Normalize-XrefDisplayText -DisplayText $refsByBookmark[$bmName][0].DisplayText
+    if ([string]::IsNullOrWhiteSpace($display)) {
+      continue
+    }
+    $anchorMap[$bmName] = $bmName
   }
 
   $sep = if ($Markdown.Contains("`r`n")) { "`r`n" } else { "`n" }
   $lines = $Markdown -split $sep
 
   foreach ($bmName in $refsByBookmark.Keys) {
-    $display = $refsByBookmark[$bmName][0].DisplayText
+    $display = Normalize-XrefDisplayText -DisplayText $refsByBookmark[$bmName][0].DisplayText
     $anchorId = $anchorMap[$bmName]
+    if (-not $anchorId) { continue }
+    if ([string]::IsNullOrWhiteSpace($display)) { continue }
     $idx = Find-AnchorLine -Lines $lines -DisplayText $display
     if ($idx -ge 0) {
-      $lines[$idx] = $lines[$idx].TrimEnd() + " []{#$anchorId}"
+      $anchorToken = "[]{#$anchorId}"
+      if ($lines[$idx] -notmatch [regex]::Escape($anchorToken)) {
+        $lines[$idx] = $lines[$idx].TrimEnd() + " $anchorToken"
+      }
     }
   }
 
@@ -275,20 +322,34 @@ function Add-CrossReferences {
   foreach ($ref in $sortedRefs) {
     $anchorId = $anchorMap[$ref.BookmarkName]
     if (-not $anchorId) { continue }
+    $displayText = Normalize-XrefDisplayText -DisplayText $ref.DisplayText
+    if ([string]::IsNullOrWhiteSpace($displayText)) { continue }
+    $xrefSwitches = Convert-SwitchesToMarkdownXref -Switches $ref.Switches
+    $linkSuffix = ' "xref:' + $xrefSwitches + '")'
 
-    $escaped = [regex]::Escape($ref.DisplayText)
-    $pattern = "(Article\s+${escaped})(?![a-zA-Z0-9\)\.])"
-    $replacement = '[$1](#' + $anchorId + ')'
+    $escaped = [regex]::Escape($displayText)
+    if ($displayText -notmatch '^(?i)Article\s+') {
+      $pattern = "(Article\s+${escaped})(?![a-zA-Z0-9\)])"
+      $replacement = '[$1](#' + $anchorId + $linkSuffix
+      $newResult = [regex]::Replace($result, $pattern, $replacement)
+
+      if ($newResult -ne $result) {
+        $result = $newResult
+        continue
+      }
+    }
+
+    $pattern = "(?<=See\s+)(${escaped})(?![a-zA-Z0-9\)])"
+    $replacement = '[$1](#' + $anchorId + $linkSuffix
     $newResult = [regex]::Replace($result, $pattern, $replacement)
-
     if ($newResult -ne $result) {
       $result = $newResult
+      continue
     }
-    else {
-      $pattern = "(?<=See\s+)(${escaped})(?![a-zA-Z0-9\)\.])"
-      $replacement = '[$1](#' + $anchorId + ')'
-      $result = [regex]::Replace($result, $pattern, $replacement)
-    }
+
+    $pattern = "(?<=in\s+)(${escaped})(?![a-zA-Z0-9\)])"
+    $replacement = '[$1](#' + $anchorId + $linkSuffix
+    $result = [regex]::Replace($result, $pattern, $replacement)
   }
 
   return $result
