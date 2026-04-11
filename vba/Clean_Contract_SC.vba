@@ -17,25 +17,49 @@ Sub Clean_Contract_SC()
         .Wrap = wdFindContinue
         .Format = False
         
-        ' Normalize {{
+        ' Normalize {{ and }}
         .Text = "{{"
         .Replacement.Text = "{{ "
         .Execute Replace:=wdReplaceAll
         
-        ' Normalize }}
         .Text = "}}"
         .Replacement.Text = " }}"
         .Execute Replace:=wdReplaceAll
-
         
-        ' Normalize %}
+        ' Normalize {% and %}
         .Text = "%}"
         .Replacement.Text = " %}"
         .Execute Replace:=wdReplaceAll
 
-        ' Normalize {%
         .Text = "{%"
         .Replacement.Text = "{% "
+        .Execute Replace:=wdReplaceAll
+
+        ' Normalize {? and ?}
+        .Text = "{?"
+        .Replacement.Text = "{? "
+        .Execute Replace:=wdReplaceAll
+
+        .Text = "?}"
+        .Replacement.Text = " ?}"
+        .Execute Replace:=wdReplaceAll
+
+        ' Normalize ‹ and ›
+        .Text = "‹"
+        .Replacement.Text = "‹ "
+        .Execute Replace:=wdReplaceAll
+
+        .Text = "›"
+        .Replacement.Text = " ›"
+        .Execute Replace:=wdReplaceAll
+
+        ' Normalize [ and ]
+        .Text = "["
+        .Replacement.Text = "[ "
+        .Execute Replace:=wdReplaceAll
+        
+        .Text = "]"
+        .Replacement.Text = " ]"
         .Execute Replace:=wdReplaceAll
 
         ' Remplace double spaces with single spaces (in case of multiple tags)
