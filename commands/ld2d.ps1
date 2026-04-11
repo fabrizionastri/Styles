@@ -100,17 +100,30 @@ if (-not (Test-Path -LiteralPath $referenceDoc)) {
 $resolvedInput = Resolve-InputPath -PathValue $InputFile -DefaultExtension $defaultInputExtension
 $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $OutputFile -DefaultExtension $defaultOutputExtension
 
-& pandoc `
-  -f "docx+styles" `
-  -t "docx" `
-  --lua-filter="$filterPath" `
-  --reference-doc="$referenceDoc" `
-  --no-highlight `
-  "$resolvedInput" `
-  -o "$resolvedOutput"
+$tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("ld2d_" + [System.Guid]::NewGuid().ToString("N"))
+$tempInput = Join-Path $tempDir "input.docx"
 
-if ($LASTEXITCODE -ne 0) {
-  exit $LASTEXITCODE
+try {
+  New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+  Copy-Item -LiteralPath $resolvedInput -Destination $tempInput -Force
+
+  & pandoc `
+    -f "docx+styles" `
+    -t "docx" `
+    --lua-filter="$filterPath" `
+    --reference-doc="$referenceDoc" `
+    --no-highlight `
+    "$tempInput" `
+    -o "$resolvedOutput"
+
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+}
+finally {
+  if (Test-Path -LiteralPath $tempDir) {
+    Remove-Item -LiteralPath $tempDir -Force -Recurse
+  }
 }
 
 Write-Output "Created: $resolvedOutput"

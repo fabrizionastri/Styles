@@ -735,8 +735,11 @@ $tempExtract = Join-Path $tempRoot "media_extract"
 try {
   New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
 
-  $xrefData = Extract-CrossReferences -DocxPath $resolvedInput
-  $imageNameMap = Get-WordImageNameMap -DocxPath $resolvedInput
+  $tempInput = Join-Path $tempRoot "input.docx"
+  Copy-Item -LiteralPath $resolvedInput -Destination $tempInput -Force
+
+  $xrefData = Extract-CrossReferences -DocxPath $tempInput
+  $imageNameMap = Get-WordImageNameMap -DocxPath $tempInput
 
   & pandoc `
     -f "docx+styles" `
@@ -744,7 +747,7 @@ try {
     --wrap=none `
     --extract-media="$tempExtract" `
     --lua-filter="$filterPath" `
-    "$resolvedInput" `
+    "$tempInput" `
     -o "$tempOutput"
 
   if ($LASTEXITCODE -ne 0) {
