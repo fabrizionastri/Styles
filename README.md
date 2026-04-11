@@ -102,16 +102,22 @@ Same as above, but converts every `.docx` file to `.md`.
 
 If an output file already exists, the commands add a counter to avoid overwriting: `My Contract_1.docx`, `My Contract_2.docx`, etc.
 
-You can also specify a different output name for single-file commands:
+You can also specify where single-file commands should write their output:
 ```
 d2m "My Contract.docx" "output.md"
 m2d "My Contract.md" "output.docx"
 ld2d "Old Contract.docx" "New Contract"
+d2m "My Contract.docx" "."
+d2m "My Contract.docx" ".\plop"
 ```
 
 You don't need to type the file extension -- the commands will add `.docx` or `.md` automatically if you leave it out.
 
-Output files are always created in the same folder as the input file, regardless of your current directory.
+When you do not provide a second argument, the output is created in the same folder as the input file. When you do provide one, relative paths are resolved from your current PowerShell folder:
+
+- `.` means "write here" and keeps the input file name, for example `My Contract.md`
+- `.\plop` means "write here as `plop.md`" for `d2m`, or `plop.docx` for `m2d`
+- an existing folder path means "write into that folder" and keep the input file name
 
 
 
@@ -241,7 +247,16 @@ Both batch commands process only the top-level folder (no recursion into subfold
 
 ## Output path behaviour
 
-All commands (`d2m`, `m2d`, `ld2d`, `d2m-all`, `m2d-all`) create output files in the same folder as the input file, regardless of the current working directory. If you provide an explicit relative output path, it is also resolved relative to the input file's folder. Only absolute output paths override this behaviour.
+For single-file commands (`d2m`, `m2d`, `ld2d`, `dmd`, `mdm`):
+
+- with no second argument, the output is created next to the input file
+- with a second argument, relative output paths are resolved from the current PowerShell folder
+- `.` writes to the current folder using the input file's base name
+- `.\plop` writes to the current folder using `plop` as the base name
+- an existing folder path, `.` / `..`, or a path ending in a slash is treated as an output folder
+- absolute output paths are used as provided
+
+Batch commands (`d2m-all`, `m2d-all`) still create each output file alongside its source file.
 
 ## Extension inference
 
@@ -258,6 +273,8 @@ All commands automatically add file extensions when omitted:
 Examples:
 - `d2m "contract"` reads `contract.docx`, writes `contract.md`
 - `m2d "contract" "final"` reads `contract.md`, writes `final.docx`
+- `d2m "contract.docx" "."` reads `contract.docx`, writes `.\contract.md`
+- `d2m "contract.docx" ".\plop"` reads `contract.docx`, writes `.\plop.md`
 - `ld2d "legacy"` reads `legacy.docx`, writes `legacy_remapped.docx`
 - `ld2d "legacy.docx" "clean"` reads `legacy.docx`, writes `clean.docx`
 
