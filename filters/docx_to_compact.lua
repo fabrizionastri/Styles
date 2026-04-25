@@ -23,6 +23,8 @@ local UNWRAP_STYLE_SET = {
   ["footnote text"] = true,
 }
 
+local LARGE_TABLE_THRESHOLD = 120
+
 local BLOCK_STYLE_SET = {
   ["Comments"] = true,
   ["Published"] = true,
@@ -218,12 +220,31 @@ local function tighten_list_item_blocks(item_blocks)
   return out
 end
 
+local function remove_md_escapes(txt)
+  txt = txt:gsub("\\%[", "[")
+  txt = txt:gsub("\\%]", "]")
+  txt = txt:gsub("\\<", "<")
+  txt = txt:gsub("\\%-", "-")
+  return txt
+end
+
 local function inlines_to_markdown_line(inlines)
   local tmp_doc = pandoc.Pandoc({ pandoc.Plain(inlines) }, pandoc.Meta({}))
   local txt = pandoc.write(tmp_doc, "markdown-smart")
   txt = txt:gsub("\r\n", "\n")
   txt = trim(txt:gsub("\n+$", ""))
   txt = txt:gsub("%s*\n%s*", " ")
+  return remove_md_escapes(txt)
+end
+
+local function cell_blocks_to_markdown(blocks)
+  if #blocks == 0 then return " " end
+  local doc = pandoc.Pandoc(blocks, pandoc.Meta({}))
+  local txt = pandoc.write(doc, "markdown-smart")
+  txt = txt:gsub("\r\n", "\n")
+  txt = txt:gsub("\n+$", "")
+  txt = remove_md_escapes(txt)
+  if txt == "" then return " " end
   return txt
 end
 
@@ -387,149 +408,182 @@ local function render_ordered_items(items, level, list_style, start)
 end
 
 local function convert_blocks(blocks, state)
-  local function table_row_to_cells(row)
-    local cells = {}
-    for _, cell in ipairs(row.cells or {}) do
-      local converted = convert_blocks(cell.content or {}, state)
-      local parts = {}
+  local function convert_table(tbl)
+    local header_rows = tbl.head and tbl.head.rows or {}
+    local body_rows = {}
+    if tbl.bodies then
+      for _, body in ipairs(tbl.bodies) do
+        if body.head then
+          for _, row in ipairs(body.head) do body_rows[#body_rows + 1] = row end
+        end
+        if body.body then
+          for _, row in ipairs(body.body) do body_rows[#body_rows + 1] = row end
+        end
+      end
+    end
 
-      for _, b in ipairs(converted) do
+    -- Extract cell content as converted block lists (one entry per cell).
+    local function table_row_to_cell_blocks(row)
+      local cells = {}
+      for _, cell in ipairs(row.cells or {}) do
+        cells[#cells + 1] = convert_blocks(cell.content or {}, state)
+      end
+      return cells
+    end
+
+    -- Flatten cell blocks to a single string (paragraphs joined with <br>).
+    -- Used for small-table rendering and threshold estimation.
+    local function cell_blocks_to_flat(blocks)
+      local parts = {}
+      for _, b in ipairs(blocks) do
         if b.t == "Para" or b.t == "Plain" then
           parts[#parts + 1] = inlines_to_markdown_line(b.content)
         elseif b.t == "Header" then
           parts[#parts + 1] = inlines_to_markdown_line(b.content)
         elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
           local raw = trim((b.text or b.c or ""):gsub("\r\n", "\n"):gsub("\n+", " "))
-          if raw ~= "" then
-            parts[#parts + 1] = raw
-          end
+          if raw ~= "" then parts[#parts + 1] = raw end
         end
       end
-
       local text = table.concat(parts, "<br>")
-      cells[#cells + 1] = escape_pipe_cell(text)
-    end
-    return cells
-  end
-
-  local function convert_table(tbl)
-    local lines = {}
-
-    local header_rows = tbl.head and tbl.head.rows or {}
-    local body_rows = {}
-    if tbl.bodies then
-      for _, body in ipairs(tbl.bodies) do
-        if body.head then
-          for _, row in ipairs(body.head) do
-            body_rows[#body_rows + 1] = row
-          end
-        end
-        if body.body then
-          for _, row in ipairs(body.body) do
-            body_rows[#body_rows + 1] = row
-          end
-        end
-      end
+      if text == "" then return " " end
+      return text
     end
 
-    local header_cells = {}
+    -- Gather header and body cell blocks.
+    local header_cell_blocks = {}
+    local body_cell_blocks = {}
     local start_body_index = 1
 
     if #header_rows > 0 then
-      header_cells = table_row_to_cells(header_rows[1])
-      for i = 2, #header_rows do
-        body_rows[#body_rows + 1] = header_rows[i]
-      end
+      header_cell_blocks = table_row_to_cell_blocks(header_rows[1])
+      for i = 2, #header_rows do body_rows[#body_rows + 1] = header_rows[i] end
     elseif #body_rows > 0 then
-      header_cells = table_row_to_cells(body_rows[1])
+      header_cell_blocks = table_row_to_cell_blocks(body_rows[1])
       start_body_index = 2
     else
       return pandoc.List:new()
     end
 
-    local col_count = #header_cells
-    if col_count == 0 then
-      return pandoc.List:new()
-    end
+    local col_count = #header_cell_blocks
+    if col_count == 0 then return pandoc.List:new() end
 
-    local function normalize_row(cells)
-      while #cells < col_count do
-        cells[#cells + 1] = " "
-      end
-      if #cells > col_count then
-        local clipped = {}
-        for i = 1, col_count do
-          clipped[i] = cells[i]
-        end
-        return clipped
-      end
-      return cells
-    end
-
-    header_cells = normalize_row(header_cells)
-    local body_cells = {}
     for i = start_body_index, #body_rows do
-      body_cells[#body_cells + 1] = normalize_row(table_row_to_cells(body_rows[i]))
+      body_cell_blocks[#body_cell_blocks + 1] = table_row_to_cell_blocks(body_rows[i])
     end
 
-    local function display_width(text)
-      local value = text or ""
-      if pandoc.text and pandoc.text.len then
-        return pandoc.text.len(value)
+    local function normalize_blocks_row(row)
+      while #row < col_count do row[#row + 1] = {} end
+      while #row > col_count do row[#row] = nil end
+      return row
+    end
+
+    header_cell_blocks = normalize_blocks_row(header_cell_blocks)
+    for i, row in ipairs(body_cell_blocks) do
+      body_cell_blocks[i] = normalize_blocks_row(row)
+    end
+
+    -- Determine the maximum flat-string length across all cells.
+    local max_cell_len = 0
+    local function observe_len(blocks)
+      local s = cell_blocks_to_flat(blocks)
+      if #s > max_cell_len then max_cell_len = #s end
+    end
+    for _, cell in ipairs(header_cell_blocks) do observe_len(cell) end
+    for _, row in ipairs(body_cell_blocks) do
+      for _, cell in ipairs(row) do observe_len(cell) end
+    end
+
+    if max_cell_len > LARGE_TABLE_THRESHOLD then
+      -- Large table: ::: LargeTable format with trailing " |" / " ||" markers.
+      local vlines = { "::: LargeTable", "" }
+
+      local function render_large_row(cell_blocks_row)
+        for i, cell_blocks in ipairs(cell_blocks_row) do
+          local marker = (i == col_count) and " ||" or " |"
+          local md = cell_blocks_to_markdown(cell_blocks)
+          local clines = split_lines(md)
+          if #clines == 0 then clines = { " " } end
+          clines[#clines] = clines[#clines] .. marker
+          for _, l in ipairs(clines) do vlines[#vlines + 1] = l end
+        end
+        vlines[#vlines + 1] = ""
       end
-      return #value
-    end
 
-    local function right_pad(text, target_width)
-      local value = text or ""
-      local missing = target_width - display_width(value)
-      if missing > 0 then
-        return value .. string.rep(" ", missing)
+      render_large_row(header_cell_blocks)
+      for _, row in ipairs(body_cell_blocks) do render_large_row(row) end
+      vlines[#vlines + 1] = ":::"
+
+      return pandoc.RawBlock("markdown", "\n" .. table.concat(vlines, "\n"))
+    else
+      -- Small table: standard GFM pipe table.
+      local function normalize_cells(cells)
+        while #cells < col_count do cells[#cells + 1] = " " end
+        if #cells > col_count then
+          local clipped = {}
+          for i = 1, col_count do clipped[i] = cells[i] end
+          return clipped
+        end
+        return cells
       end
-      return value
-    end
 
-    local col_widths = {}
-    local function observe_widths(row)
-      for i = 1, col_count do
-        local width = display_width(row[i] or " ")
-        if not col_widths[i] or width > col_widths[i] then
-          col_widths[i] = width
+      local header_cells = {}
+      for _, c in ipairs(header_cell_blocks) do
+        header_cells[#header_cells + 1] = escape_pipe_cell(cell_blocks_to_flat(c))
+      end
+      header_cells = normalize_cells(header_cells)
+
+      local body_cells = {}
+      for _, row in ipairs(body_cell_blocks) do
+        local row_cells = {}
+        for _, c in ipairs(row) do
+          row_cells[#row_cells + 1] = escape_pipe_cell(cell_blocks_to_flat(c))
+        end
+        body_cells[#body_cells + 1] = normalize_cells(row_cells)
+      end
+
+      local function display_width(text)
+        local value = text or ""
+        if pandoc.text and pandoc.text.len then return pandoc.text.len(value) end
+        return #value
+      end
+
+      local function right_pad(text, target_width)
+        local value = text or ""
+        local missing = target_width - display_width(value)
+        if missing > 0 then return value .. string.rep(" ", missing) end
+        return value
+      end
+
+      local col_widths = {}
+      local function observe_widths(row)
+        for i = 1, col_count do
+          local width = display_width(row[i] or " ")
+          if not col_widths[i] or width > col_widths[i] then col_widths[i] = width end
         end
       end
-    end
 
-    observe_widths(header_cells)
-    for _, row in ipairs(body_cells) do
-      observe_widths(row)
-    end
-    for i = 1, col_count do
-      if col_widths[i] < 3 then
-        col_widths[i] = 3
+      observe_widths(header_cells)
+      for _, row in ipairs(body_cells) do observe_widths(row) end
+      for i = 1, col_count do if col_widths[i] < 3 then col_widths[i] = 3 end end
+
+      local function render_row(row)
+        local rendered = {}
+        for i = 1, col_count do
+          rendered[#rendered + 1] = right_pad(row[i] or " ", col_widths[i])
+        end
+        return "| " .. table.concat(rendered, " | ") .. " |"
       end
+
+      local lines = {}
+      lines[#lines + 1] = render_row(header_cells)
+      local sep = {}
+      for i = 1, col_count do sep[#sep + 1] = string.rep("-", col_widths[i]) end
+      lines[#lines + 1] = "| " .. table.concat(sep, " | ") .. " |"
+      for _, row in ipairs(body_cells) do lines[#lines + 1] = render_row(row) end
+
+      return pandoc.RawBlock("markdown", "\n" .. table.concat(lines, "\n"))
     end
-
-    local function render_row(row)
-      local rendered = {}
-      for i = 1, col_count do
-        rendered[#rendered + 1] = right_pad(row[i] or " ", col_widths[i])
-      end
-      return "| " .. table.concat(rendered, " | ") .. " |"
-    end
-
-    lines[#lines + 1] = render_row(header_cells)
-
-    local sep = {}
-    for i = 1, col_count do
-      sep[#sep + 1] = string.rep("-", col_widths[i])
-    end
-    lines[#lines + 1] = "| " .. table.concat(sep, " | ") .. " |"
-
-    for _, row in ipairs(body_cells) do
-      lines[#lines + 1] = render_row(row)
-    end
-
-    return pandoc.RawBlock("markdown", "\n" .. table.concat(lines, "\n"))
   end
 
   local function convert_div(div)

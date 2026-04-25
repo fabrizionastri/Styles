@@ -66,6 +66,11 @@ Sub Clean_Contract_SC()
         .Text = "  "
         .Replacement.Text = " "
         .Execute Replace:=wdReplaceAll
+
+        ' Replace {% tr with {%tr because for this specific tag, there is no space after the opening brace in the template
+        .Text = "{% tr"
+        .Replacement.Text = "{%tr"
+        .Execute Replace:=wdReplaceAll
         
     End With
 

@@ -417,6 +417,22 @@ function Add-CrossReferences {
   return $result
 }
 
+function Remove-MarkdownEscapes {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Markdown
+  )
+
+  # Remove backslash escapes that pandoc adds but are unnecessary in our
+  # contract-template format: [ ] < and - (at line start).
+  $result = $Markdown
+  $result = $result -replace '\\\[', '['
+  $result = $result -replace '\\\]', ']'
+  $result = $result -replace '\\<',  '<'
+  $result = $result -replace '\\\-', '-'
+  return $result
+}
+
 function Get-UniqueFilePath {
   param(
     [Parameter(Mandatory = $true)]
@@ -825,6 +841,7 @@ try {
     -TargetMediaDirectory $targetMediaDirectory `
     -ImageNameMap $imageNameMap `
     -OutputPath $resolvedOutput
+  $rendered = Remove-MarkdownEscapes -Markdown $rendered
   if (-not ($rendered.EndsWith("`n") -or $rendered.EndsWith("`r"))) {
     $newline = if ($rendered.Contains("`r`n")) { "`r`n" } else { "`n" }
     $rendered += $newline

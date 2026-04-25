@@ -27,6 +27,19 @@ function m2d {
   & (Join-Path $script:commandsRoot "m2d.ps1") $InputFile $OutputFile
 }
 
+function m2p {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory = $true, Position = 0)]
+    [string]$InputFile,
+
+    [Parameter(Position = 1)]
+    [string]$OutputFile
+  )
+
+  & (Join-Path $script:commandsRoot "m2p.ps1") $InputFile $OutputFile
+}
+
 function ld2d {
   [CmdletBinding()]
   param(

@@ -121,6 +121,59 @@ When you do not provide a second argument, the output is created in the same fol
 
 
 
+### Step 4. Set up the VS Code shortcut (one-time, optional)
+
+If you draft documents in Markdown and want to paste them into Outlook with formatting intact, install this keyboard shortcut. It converts the active `.md` file to HTML and places it on the Windows clipboard in a format that Outlook recognises as rich text — so paragraphs stay as paragraphs instead of turning into bullet points.
+
+**Requirements:** VS Code, plus Python and Pandoc (both covered by Steps 1 and 2 above).
+
+1. **Copy the script.** Create the folder `%APPDATA%\Code\User\scripts\` if it does not already exist, then copy `commands/md2clip.py` from this repository into it. The destination path will look like:
+   ```
+   C:\Users\<your-name>\AppData\Roaming\Code\User\scripts\md2clip.py
+   ```
+   Tip: press Win+R, type `%APPDATA%`, and press Enter to open the folder directly in Windows Explorer.
+
+2. **Create the VS Code task.** Create the file `%APPDATA%\Code\User\tasks.json` with the content below. If the file already exists, add the task object to the existing `"tasks"` array instead of replacing the whole file.
+   ```json
+   {
+     "version": "2.0.0",
+     "tasks": [
+       {
+         "label": "Copy MD as HTML",
+         "type": "process",
+         "command": "python",
+         "args": [
+           "${env:APPDATA}/Code/User/scripts/md2clip.py",
+           "${file}"
+         ],
+         "problemMatcher": [],
+         "presentation": {
+           "reveal": "silent",
+           "revealProblems": "onProblem",
+           "close": true,
+           "panel": "dedicated"
+         }
+       }
+     ]
+   }
+   ```
+
+3. **Add the keyboard shortcut.** In VS Code, press `Ctrl+Shift+P`, type `Open Keyboard Shortcuts (JSON)`, and press Enter. Add this entry to the JSON array:
+   ```json
+   {
+     "key": "ctrl+alt+c",
+     "command": "workbench.action.tasks.runTask",
+     "args": "Copy MD as HTML",
+     "when": "editorLangId == markdown"
+   }
+   ```
+
+4. **Reload VS Code.** Press `Ctrl+Shift+P`, type `Developer: Reload Window`, and press Enter. If the shortcut does not respond after reloading, close and reopen VS Code completely.
+
+**How to use it:** open any `.md` file, press `Ctrl+Alt+C`, then paste directly into an Outlook email. The formatted text will paste correctly.
+
+
+
 ## Recommended workflow
 
 ### Working on a document
@@ -186,6 +239,12 @@ The commands are not loaded. Either run `install_commands.ps1` again (see Step 2
 **"Input file not found"**
 Check that the file name is correct and that you are in the right folder. Use `dir` to list the files in the current folder. If the file name contains spaces, make sure to wrap it in quotes: `d2m "My Contract.docx"`.
 
+**`Ctrl+Alt+C` does nothing in a Markdown file**
+VS Code may not have loaded the new task yet. Try a full restart (close and reopen VS Code, not just a reload window). You can also verify the task is available: press `Ctrl+Shift+P`, type `Tasks: Run Task`, and check that "Copy MD as HTML" appears in the list labelled "User".
+
+**The VS Code task fails with a PowerShell error**
+Open `%APPDATA%\Code\User\tasks.json` and confirm the task has `"type": "process"`, not `"type": "shell"`. The shell type routes the command through PowerShell, which parses the file path arguments and can fail when a path contains spaces.
+
 
 
 
@@ -206,6 +265,7 @@ Everything below is detailed technical documentation for developers and advanced
 | `commands/commands.ps1`              | Loads all commands as PowerShell functions      | --                                                                  |
 | `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile | --                                                                  |
 | `commands/remap_legacy_contracts.py` | In-place legacy style remapping                 | `python-docx`                                                       |
+| `commands/md2clip.py`                | Markdown → HTML clipboard (VS Code shortcut)    | Pandoc, PowerShell                                                  |
 
 ## Conversion commands (direct invocation)
 

@@ -11,7 +11,7 @@ $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $filterPath = Join-Path $scriptRoot "..\filters\compact_to_docx.lua"
 $referenceDoc = Join-Path $scriptRoot "..\styles\flexup_template.docx"
 $defaultInputExtension = ".md"
-$defaultOutputExtension = ".docx"
+$defaultOutputExtension = ".pdf"
 
 function Resolve-InputPath {
   param(
@@ -237,15 +237,6 @@ function Convert-LargeTableToGfm {
     [string]$Markdown
   )
 
-  # Convert ::: LargeTable blocks back to standard GFM pipe tables so that
-  # pandoc + compact_to_docx.lua can process them normally.
-  #
-  # Cell format  : content line(s) ending with " |"  (trailing space + pipe)
-  # Row format   : last cell of the row ends with " ||" (trailing space + double-pipe)
-  # First row    : treated as the table header.
-  # Multi-para   : blank lines within a cell are paragraph separators; each
-  #               non-blank group is joined with <br> before entering the cell.
-
   $lines = $Markdown -replace "`r`n", "`n" -split "`n", -1
   $outLines = [System.Collections.Generic.List[string]]::new()
   $i = 0
@@ -253,9 +244,8 @@ function Convert-LargeTableToGfm {
   while ($i -lt $lines.Length) {
 
     if ($lines[$i] -match '^:::\s*LargeTable\s*$') {
-      $i++  # skip fence-open line
+      $i++
 
-      # Collect rows: list of (list of string[])  row -> cells -> content lines
       $allRows    = [System.Collections.Generic.List[object]]::new()
       $cellLines  = [System.Collections.Generic.List[string]]::new()
       $rowCells   = [System.Collections.Generic.List[object]]::new()
@@ -264,7 +254,6 @@ function Convert-LargeTableToGfm {
         $l = $lines[$i]; $i++
 
         if ($l -match '^(.*) \|\|$') {
-          # End of cell AND row
           $cellLines.Add($Matches[1])
           $rowCells.Add($cellLines.ToArray())
           $allRows.Add($rowCells.ToArray())
@@ -272,7 +261,6 @@ function Convert-LargeTableToGfm {
           $rowCells  = [System.Collections.Generic.List[object]]::new()
         }
         elseif ($l -match '^(.*) \|$') {
-          # End of cell (row continues)
           $cellLines.Add($Matches[1])
           $rowCells.Add($cellLines.ToArray())
           $cellLines = [System.Collections.Generic.List[string]]::new()
@@ -281,15 +269,12 @@ function Convert-LargeTableToGfm {
           $cellLines.Add($l)
         }
       }
-      if ($i -lt $lines.Length) { $i++ }  # skip fence-close line
+      if ($i -lt $lines.Length) { $i++ }
 
       if ($allRows.Count -eq 0) { continue }
 
       $colCount = ([object[]]$allRows[0]).Count
 
-      # Flatten a cell's line array to a single GFM-safe string.
-      # Blank-line-separated groups become <br>-separated segments;
-      # lines within a group are also joined with <br>.
       $flattenCell = [scriptblock]{
         param([string[]]$cellLineArr)
         $groups = [System.Collections.Generic.List[string]]::new()
@@ -306,12 +291,11 @@ function Convert-LargeTableToGfm {
         }
         if ($group.Count -gt 0) { $groups.Add(($group.ToArray() -join '<br>')) }
         $flat = $groups.ToArray() -join '<br>'
-        $flat = $flat.Replace('|', '\|')   # escape pipes for GFM
+        $flat = $flat.Replace('|', '\|')
         if ([string]::IsNullOrWhiteSpace($flat)) { return ' ' }
         return $flat.Trim()
       }
 
-      # Build flat strings for every cell in every row.
       $flatRows = foreach ($row in $allRows) {
         $cells = foreach ($cellArr in [object[]]$row) {
           & $flattenCell ([string[]]$cellArr)
@@ -319,7 +303,6 @@ function Convert-LargeTableToGfm {
         ,@($cells)
       }
 
-      # Compute per-column widths (minimum 3).
       $colWidths = @(3) * $colCount
       foreach ($row in $flatRows) {
         $rowArr = [string[]]$row
@@ -329,7 +312,6 @@ function Convert-LargeTableToGfm {
         }
       }
 
-      # Render header (first row).
       $hArr   = [string[]]$flatRows[0]
       $hParts = for ($c = 0; $c -lt $colCount; $c++) {
         $v = if ($c -lt $hArr.Length) { $hArr[$c] } else { ' ' }
@@ -337,11 +319,9 @@ function Convert-LargeTableToGfm {
       }
       $outLines.Add('| ' + ($hParts -join ' | ') + ' |')
 
-      # Separator row.
       $sepParts = $colWidths | ForEach-Object { '-' * $_ }
       $outLines.Add('| ' + ($sepParts -join ' | ') + ' |')
 
-      # Body rows.
       for ($r = 1; $r -lt $flatRows.Count; $r++) {
         $rArr   = [string[]]$flatRows[$r]
         $rParts = for ($c = 0; $c -lt $colCount; $c++) {
@@ -900,7 +880,6 @@ function Format-DocxLayout {
     }
 
     foreach ($tbl in $xml.SelectNodes('//w:tbl', $ns)) {
-      # --- Table borders ---
       $tblPr = $tbl.SelectSingleNode('w:tblPr', $ns)
       if (-not $tblPr) {
         $tblPr = $xml.CreateElement('w', 'tblPr', $nsUri)
@@ -926,7 +905,6 @@ function Format-DocxLayout {
       $tblPr.AppendChild($borders) | Out-Null
       $modified = $true
 
-      # --- Center table ---
       $tblJc = $tblPr.SelectSingleNode('w:jc', $ns)
       if (-not $tblJc) {
         $tblJc = $xml.CreateElement('w', 'jc', $nsUri)
@@ -938,7 +916,6 @@ function Format-DocxLayout {
         $modified = $true
       }
 
-      # --- Header row shading ---
       $firstRow = $tbl.SelectSingleNode('w:tr', $ns)
       if (-not $firstRow) { continue }
 
@@ -965,7 +942,6 @@ function Format-DocxLayout {
       }
     }
 
-    # Center all image paragraphs.
     foreach ($imgPara in $xml.SelectNodes('//w:p[.//w:drawing]', $ns)) {
       $pPr = $imgPara.SelectSingleNode('w:pPr', $ns)
       if (-not $pPr) {
@@ -987,7 +963,6 @@ function Format-DocxLayout {
       }
     }
 
-    # Ensure visible blank lines before and after top-level tables and illustrations.
     $bodyTargets = @(
       $xml.SelectNodes('/w:document/w:body/*[self::w:tbl or (self::w:p and .//w:drawing)]', $ns)
     )
@@ -1014,6 +989,39 @@ function Format-DocxLayout {
   }
 }
 
+function Export-DocxToPdf {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$DocxPath,
+
+    [Parameter(Mandatory = $true)]
+    [string]$PdfPath
+  )
+
+  $word = $null
+  $doc = $null
+
+  try {
+    $word = New-Object -ComObject Word.Application
+    $word.Visible = $false
+    $doc = $word.Documents.Open($DocxPath, $false, $true)  # ReadOnly = true
+    # 17 = wdExportFormatPDF
+    $doc.ExportAsFixedFormat($PdfPath, 17)
+  }
+  finally {
+    if ($doc) {
+      try { $doc.Close([ref]$false) } catch {}
+      [System.Runtime.InteropServices.Marshal]::ReleaseComObject($doc) | Out-Null
+    }
+    if ($word) {
+      try { $word.Quit() } catch {}
+      [System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null
+    }
+    [System.GC]::Collect()
+    [System.GC]::WaitForPendingFinalizers()
+  }
+}
+
 if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) {
   throw "Pandoc is not installed or not in PATH."
 }
@@ -1031,8 +1039,9 @@ $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $Outp
 
 $preparedMarkdown = Convert-OffsetPrefixesToStyleSuffix -InputPath $resolvedInput
 $preparedMarkdown = Convert-LargeTableToGfm -Markdown $preparedMarkdown
-$tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("m2d_" + [System.Guid]::NewGuid().ToString("N"))
+$tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("m2p_" + [System.Guid]::NewGuid().ToString("N"))
 $tempInput = Join-Path $tempRoot "input.md"
+$tempDocx = Join-Path $tempRoot "output.docx"
 $preparedMarkdown = Stage-MarkdownImages -Markdown $preparedMarkdown -MarkdownPath $resolvedInput -TempRoot $tempRoot
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
@@ -1047,18 +1056,20 @@ try {
     --reference-doc="$referenceDoc" `
     --lua-filter="$filterPath" `
     "$tempInput" `
-    -o "$resolvedOutput"
+    -o "$tempDocx"
+
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+
+  Format-DocxLayout -DocxPath $tempDocx -SourceMarkdown $preparedMarkdown
+
+  Export-DocxToPdf -DocxPath $tempDocx -PdfPath $resolvedOutput
 }
 finally {
   if (Test-Path -LiteralPath $tempRoot) {
     Remove-Item -LiteralPath $tempRoot -Force -Recurse
   }
 }
-
-if ($LASTEXITCODE -ne 0) {
-  exit $LASTEXITCODE
-}
-
-Format-DocxLayout -DocxPath $resolvedOutput -SourceMarkdown $preparedMarkdown
 
 Write-Output "Created: $resolvedOutput"
