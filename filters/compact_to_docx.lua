@@ -510,13 +510,52 @@ local function convert_blocks(blocks, state, ctx)
       end
 
     elseif block.t == "Table" then
-      if #block.colspecs == 2 then
-        block.colspecs = {
+      -- Recurse into every cell so styled cell content (::: Comments,
+      -- bullet lists, compact clause markers) is mapped to Word styles,
+      -- then rebuild the table so the conversion is captured reliably.
+      local function rebuild_table_row(row)
+        local cells = pandoc.List:new()
+        for _, cell in ipairs(row.cells or {}) do
+          local content = convert_blocks(cell.content or {}, state, { bullet_depth = 0 })
+          cells:insert(pandoc.Cell(content, cell.alignment, cell.row_span, cell.col_span, cell.attr))
+        end
+        return pandoc.Row(cells, row.attr)
+      end
+      local function rebuild_table_rows(rows)
+        local result = pandoc.List:new()
+        if rows then
+          for _, row in ipairs(rows) do result:insert(rebuild_table_row(row)) end
+        end
+        return result
+      end
+
+      local head_rows = rebuild_table_rows(block.head and block.head.rows)
+      local body_rows = pandoc.List:new()
+      if block.bodies then
+        for _, tbody in ipairs(block.bodies) do
+          for _, r in ipairs(rebuild_table_rows(tbody.head)) do body_rows:insert(r) end
+          for _, r in ipairs(rebuild_table_rows(tbody.body)) do body_rows:insert(r) end
+        end
+      end
+      local foot_rows = rebuild_table_rows(block.foot and block.foot.rows)
+
+      local colspecs = block.colspecs
+      if #colspecs == 2 then
+        colspecs = {
           { pandoc.AlignDefault, 0.25 },
           { pandoc.AlignDefault, 0.75 },
         }
       end
-      out:insert(block)
+
+      local tbody = { attr = pandoc.Attr(), row_head_columns = 0, head = {}, body = body_rows }
+      out:insert(pandoc.Table(
+        block.caption,
+        colspecs,
+        pandoc.TableHead(head_rows),
+        { tbody },
+        pandoc.TableFoot(foot_rows),
+        block.attr
+      ))
 
     elseif block.t == "BulletList" then
       local level = (ctx.bullet_depth or 0) + 1

@@ -424,13 +424,36 @@ function Remove-MarkdownEscapes {
   )
 
   # Remove backslash escapes that pandoc adds but are unnecessary in our
-  # contract-template format: [ ] < and - (at line start).
-  $result = $Markdown
-  $result = $result -replace '\\\[', '['
-  $result = $result -replace '\\\]', ']'
-  $result = $result -replace '\\<',  '<'
-  $result = $result -replace '\\\-', '-'
-  return $result
+  # contract-template format: [ ] < and - . Grid-table rows are skipped:
+  # stripping escapes there would shrink cells and break the column
+  # alignment that grid tables require, corrupting the table on reparse.
+  $sep = if ($Markdown.Contains("`r`n")) { "`r`n" } else { "`n" }
+  $lines = $Markdown -split $sep, -1
+  $inGrid = $false
+
+  for ($i = 0; $i -lt $lines.Length; $i++) {
+    $line = $lines[$i]
+
+    if ($line -match '^\s*\+[-=+]+\+\s*$') {
+      $inGrid = $true
+      continue
+    }
+
+    if ($inGrid) {
+      if ($line -match '^\s*[|+]') {
+        continue
+      }
+      $inGrid = $false
+    }
+
+    $line = $line -replace '\\\[', '['
+    $line = $line -replace '\\\]', ']'
+    $line = $line -replace '\\<',  '<'
+    $line = $line -replace '\\\-', '-'
+    $lines[$i] = $line
+  }
+
+  return ($lines -join $sep)
 }
 
 function Get-UniqueFilePath {
