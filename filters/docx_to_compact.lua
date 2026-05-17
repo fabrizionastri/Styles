@@ -235,17 +235,6 @@ local function inlines_to_markdown_line(inlines)
   return remove_md_escapes(txt)
 end
 
-local function cell_blocks_to_markdown(blocks)
-  if #blocks == 0 then return " " end
-  local doc = pandoc.Pandoc(blocks, pandoc.Meta({}))
-  local txt = pandoc.write(doc, "markdown-smart")
-  txt = txt:gsub("\r\n", "\n")
-  txt = txt:gsub("\n+$", "")
-  txt = remove_md_escapes(txt)
-  if txt == "" then return " " end
-  return txt
-end
-
 local function split_lines(text)
   local lines = {}
   local normalized = (text or ""):gsub("\r\n", "\n")
@@ -256,15 +245,6 @@ local function split_lines(text)
     lines[#lines + 1] = line
   end
   return lines
-end
-
-local function escape_pipe_cell(text)
-  local out = text or ""
-  out = out:gsub("|", "\\|")
-  if out == "" then
-    return " "
-  end
-  return out
 end
 
 local function style_block_div(style_name, content)
@@ -406,215 +386,62 @@ local function render_ordered_items(items, level, list_style, start)
 end
 
 local function convert_blocks(blocks, state)
+  -- Rebuild a native table so pandoc owns the markdown serialization:
+  -- recurse into every cell, promote the first body row when the table
+  -- has no header (avoids an empty-header pipe table), and drop explicit
+  -- column widths so pipe/grid sizing stays content-determined and stable
+  -- across conversion round-trips.
   local function convert_table(tbl)
-    local header_rows = tbl.head and tbl.head.rows or {}
-    local body_rows = {}
+    local function rebuild_row(row)
+      local cells = pandoc.List:new()
+      for _, cell in ipairs(row.cells or {}) do
+        local content = convert_blocks(cell.content or {}, state)
+        cells:insert(pandoc.Cell(content, cell.alignment, cell.row_span, cell.col_span, cell.attr))
+      end
+      return pandoc.Row(cells, row.attr)
+    end
+
+    local head_rows = pandoc.List:new()
+    if tbl.head and tbl.head.rows then
+      for _, row in ipairs(tbl.head.rows) do head_rows:insert(rebuild_row(row)) end
+    end
+
+    local body_rows = pandoc.List:new()
     if tbl.bodies then
       for _, body in ipairs(tbl.bodies) do
         if body.head then
-          for _, row in ipairs(body.head) do body_rows[#body_rows + 1] = row end
+          for _, row in ipairs(body.head) do body_rows:insert(rebuild_row(row)) end
         end
         if body.body then
-          for _, row in ipairs(body.body) do body_rows[#body_rows + 1] = row end
+          for _, row in ipairs(body.body) do body_rows:insert(rebuild_row(row)) end
         end
       end
     end
 
-    -- Extract cell content as converted block lists (one entry per cell).
-    local function table_row_to_cell_blocks(row)
-      local cells = {}
-      for _, cell in ipairs(row.cells or {}) do
-        cells[#cells + 1] = convert_blocks(cell.content or {}, state)
-      end
-      return cells
+    local foot_rows = pandoc.List:new()
+    if tbl.foot and tbl.foot.rows then
+      for _, row in ipairs(tbl.foot.rows) do foot_rows:insert(rebuild_row(row)) end
     end
 
-    -- Flatten cell blocks to a single string (paragraphs joined with <br>).
-    -- Used for small-table rendering and threshold estimation.
-    local function cell_blocks_to_flat(blocks)
-      local parts = {}
-      for _, b in ipairs(blocks) do
-        if b.t == "Para" or b.t == "Plain" then
-          parts[#parts + 1] = inlines_to_markdown_line(b.content)
-        elseif b.t == "Header" then
-          parts[#parts + 1] = inlines_to_markdown_line(b.content)
-        elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
-          local raw = trim((b.text or b.c or ""):gsub("\r\n", "\n"):gsub("\n+", " "))
-          if raw ~= "" then parts[#parts + 1] = raw end
-        end
-      end
-      local text = table.concat(parts, "<br>")
-      if text == "" then return " " end
-      return text
+    if #head_rows == 0 and #body_rows > 0 then
+      head_rows:insert(body_rows:remove(1))
     end
 
-    -- Gather header and body cell blocks.
-    local header_cell_blocks = {}
-    local body_cell_blocks = {}
-    local start_body_index = 1
-
-    if #header_rows > 0 then
-      header_cell_blocks = table_row_to_cell_blocks(header_rows[1])
-      for i = 2, #header_rows do body_rows[#body_rows + 1] = header_rows[i] end
-    elseif #body_rows > 0 then
-      header_cell_blocks = table_row_to_cell_blocks(body_rows[1])
-      start_body_index = 2
-    else
-      return pandoc.List:new()
+    local colspecs = {}
+    for i, spec in ipairs(tbl.colspecs or {}) do
+      colspecs[i] = { spec[1], nil }
     end
 
-    local col_count = #header_cell_blocks
-    if col_count == 0 then return pandoc.List:new() end
+    local body = { attr = pandoc.Attr(), row_head_columns = 0, head = {}, body = body_rows }
 
-    for i = start_body_index, #body_rows do
-      body_cell_blocks[#body_cell_blocks + 1] = table_row_to_cell_blocks(body_rows[i])
-    end
-
-    local function normalize_blocks_row(row)
-      while #row < col_count do row[#row + 1] = {} end
-      while #row > col_count do row[#row] = nil end
-      return row
-    end
-
-    header_cell_blocks = normalize_blocks_row(header_cell_blocks)
-    for i, row in ipairs(body_cell_blocks) do
-      body_cell_blocks[i] = normalize_blocks_row(row)
-    end
-
-    -- Determine the maximum flat-string length across all cells.
-    local max_cell_len = 0
-    local function observe_len(blocks)
-      local s = cell_blocks_to_flat(blocks)
-      if #s > max_cell_len then max_cell_len = #s end
-    end
-    for _, cell in ipairs(header_cell_blocks) do observe_len(cell) end
-    for _, row in ipairs(body_cell_blocks) do
-      for _, cell in ipairs(row) do observe_len(cell) end
-    end
-
-    -- Decide: 2-column table where any cell has complex content → definition list.
-    local function is_cell_complex(cblocks)
-      if #cblocks > 1 then return true end
-      for _, b in ipairs(cblocks) do
-        if b.t == "Table" or b.t == "BulletList" or b.t == "OrderedList"
-           or b.t == "BlockQuote" then
-          return true
-        end
-      end
-      return false
-    end
-
-    local use_deflist = col_count == 2
-    if use_deflist then
-      use_deflist = false
-      for _, cb in ipairs(header_cell_blocks) do
-        if is_cell_complex(cb) then use_deflist = true; break end
-      end
-      if not use_deflist then
-        for _, row in ipairs(body_cell_blocks) do
-          for _, cb in ipairs(row) do
-            if is_cell_complex(cb) then use_deflist = true; break end
-          end
-          if use_deflist then break end
-        end
-      end
-    end
-
-    if use_deflist then
-      local function make_deflist_item(term_cblocks, def_cblocks)
-        local term_inlines = pandoc.List:new()
-        for _, b in ipairs(term_cblocks) do
-          if b.t == "Para" or b.t == "Plain" then
-            for _, inl in ipairs(b.content) do term_inlines:insert(inl) end
-            break
-          elseif b.t == "Header" then
-            for _, inl in ipairs(b.content) do term_inlines:insert(inl) end
-            break
-          end
-        end
-        return { term_inlines, { def_cblocks } }
-      end
-
-      local items = {}
-      if #header_cell_blocks >= 2 then
-        items[#items + 1] = make_deflist_item(header_cell_blocks[1], header_cell_blocks[2])
-      end
-      for _, row in ipairs(body_cell_blocks) do
-        if #row >= 2 then
-          items[#items + 1] = make_deflist_item(row[1], row[2])
-        end
-      end
-
-      return pandoc.DefinitionList(items)
-    end
-
-    -- Standard GFM pipe table.
-    local function normalize_cells(cells)
-      while #cells < col_count do cells[#cells + 1] = " " end
-      if #cells > col_count then
-        local clipped = {}
-        for i = 1, col_count do clipped[i] = cells[i] end
-        return clipped
-      end
-      return cells
-    end
-
-    local header_cells = {}
-    for _, c in ipairs(header_cell_blocks) do
-      header_cells[#header_cells + 1] = escape_pipe_cell(cell_blocks_to_flat(c))
-    end
-    header_cells = normalize_cells(header_cells)
-
-    local body_cells = {}
-    for _, row in ipairs(body_cell_blocks) do
-      local row_cells = {}
-      for _, c in ipairs(row) do
-        row_cells[#row_cells + 1] = escape_pipe_cell(cell_blocks_to_flat(c))
-      end
-      body_cells[#body_cells + 1] = normalize_cells(row_cells)
-    end
-
-    local function display_width(text)
-      local value = text or ""
-      if pandoc.text and pandoc.text.len then return pandoc.text.len(value) end
-      return #value
-    end
-
-    local function right_pad(text, target_width)
-      local value = text or ""
-      local missing = target_width - display_width(value)
-      if missing > 0 then return value .. string.rep(" ", missing) end
-      return value
-    end
-
-    local col_widths = {}
-    local function observe_widths(row)
-      for i = 1, col_count do
-        local width = display_width(row[i] or " ")
-        if not col_widths[i] or width > col_widths[i] then col_widths[i] = width end
-      end
-    end
-
-    observe_widths(header_cells)
-    for _, row in ipairs(body_cells) do observe_widths(row) end
-    for i = 1, col_count do if col_widths[i] < 3 then col_widths[i] = 3 end end
-
-    local function render_row(row)
-      local rendered = {}
-      for i = 1, col_count do
-        rendered[#rendered + 1] = right_pad(row[i] or " ", col_widths[i])
-      end
-      return "| " .. table.concat(rendered, " | ") .. " |"
-    end
-
-    local lines = {}
-    lines[#lines + 1] = render_row(header_cells)
-    local sep = {}
-    for i = 1, col_count do sep[#sep + 1] = string.rep("-", col_widths[i]) end
-    lines[#lines + 1] = "| " .. table.concat(sep, " | ") .. " |"
-    for _, row in ipairs(body_cells) do lines[#lines + 1] = render_row(row) end
-
-    return pandoc.RawBlock("markdown", "\n" .. table.concat(lines, "\n"))
+    return pandoc.Table(
+      tbl.caption,
+      colspecs,
+      pandoc.TableHead(head_rows),
+      { body },
+      pandoc.TableFoot(foot_rows),
+      tbl.attr
+    )
   end
 
   local function convert_div(div)

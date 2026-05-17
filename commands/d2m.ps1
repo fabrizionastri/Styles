@@ -821,7 +821,7 @@ try {
 
   & pandoc `
     -f "docx+styles" `
-    -t "markdown+fenced_divs-smart" `
+    -t "markdown+fenced_divs-smart-simple_tables-multiline_tables" `
     --wrap=none `
     --extract-media="$tempExtract" `
     --lua-filter="$filterPath" `

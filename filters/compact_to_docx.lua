@@ -312,101 +312,6 @@ local function convert_compact_clause_line(inlines, state)
   return nil, cleaned
 end
 
-local function is_br_inline(inl)
-  if inl.t == "LineBreak" then
-    return true
-  end
-  if inl.t == "RawInline" then
-    local fmt = enum_name(inl.format)
-    if fmt == "html" then
-      local tag = trim((inl.text or ""):lower())
-      return tag == "<br>" or tag == "<br/>" or tag == "<br />"
-    end
-  end
-  return false
-end
-
-local function split_inlines_on_br(inlines)
-  local segments = pandoc.List:new()
-  local current = pandoc.List:new()
-
-  for _, inl in ipairs(inlines) do
-    if is_br_inline(inl) then
-      segments:insert(current)
-      current = pandoc.List:new()
-    else
-      current:insert(inl)
-    end
-  end
-
-  segments:insert(current)
-  return segments
-end
-
-local function split_cell_blocks_on_br(blocks)
-  local out = pandoc.List:new()
-
-  for _, b in ipairs(blocks) do
-    if b.t == "Para" or b.t == "Plain" then
-      local has_br = false
-      for _, inl in ipairs(b.content) do
-        if is_br_inline(inl) then
-          has_br = true
-          break
-        end
-      end
-
-      if has_br then
-        local segments = split_inlines_on_br(b.content)
-        for _, seg in ipairs(segments) do
-          while #seg > 0 and seg[1].t == "Space" do
-            seg:remove(1)
-          end
-          while #seg > 0 and seg[#seg].t == "Space" do
-            seg:remove(#seg)
-          end
-          if #seg > 0 then
-            out:insert(pandoc.Para(seg))
-          end
-        end
-      else
-        out:insert(b)
-      end
-    else
-      out:insert(b)
-    end
-  end
-
-  return out
-end
-
-local function split_table_br(tbl)
-  local function process_rows(rows)
-    for _, row in ipairs(rows) do
-      for _, cell in ipairs(row.cells or {}) do
-        cell.content = split_cell_blocks_on_br(cell.content or {})
-      end
-    end
-  end
-
-  if tbl.head and tbl.head.rows then
-    process_rows(tbl.head.rows)
-  end
-
-  if tbl.bodies then
-    for _, body in ipairs(tbl.bodies) do
-      if body.head then
-        process_rows(body.head)
-      end
-      if body.body then
-        process_rows(body.body)
-      end
-    end
-  end
-
-  return tbl
-end
-
 local function append_blocks(dst, src)
   if src == nil then
     return
@@ -605,63 +510,13 @@ local function convert_blocks(blocks, state, ctx)
       end
 
     elseif block.t == "Table" then
-      local tbl = split_table_br(block)
-      if #tbl.colspecs == 2 then
-        tbl.colspecs = {
+      if #block.colspecs == 2 then
+        block.colspecs = {
           { pandoc.AlignDefault, 0.25 },
           { pandoc.AlignDefault, 0.75 },
         }
       end
-      out:insert(tbl)
-
-    elseif block.t == "DefinitionList" then
-      -- Convert definition list to a 2-column Word table.
-      -- First item = header row; remaining items = body rows.
-      local items_data = pandoc.List:new()
-      for _, item in ipairs(block.content) do
-        local term_inlines = item[1]
-        local defs = item[2]
-        local def_blocks = pandoc.List:new()
-        for _, defn in ipairs(defs) do
-          for _, b in ipairs(defn) do def_blocks:insert(b) end
-        end
-        local converted_def = convert_blocks(def_blocks, state, ctx)
-        local cleaned_term, _ = parse_inline_style_suffix(term_inlines)
-        items_data:insert({ cleaned_term, converted_def })
-      end
-
-      if #items_data > 0 then
-        local col_specs = {
-          { pandoc.AlignDefault, 0.25 },
-          { pandoc.AlignDefault, 0.75 },
-        }
-        local function make_deflist_row(term_inlines, def_blocks)
-          local c1 = pandoc.Cell(
-            pandoc.List:new({ pandoc.Plain(term_inlines) }),
-            pandoc.AlignDefault, 1, 1, pandoc.Attr()
-          )
-          local c2 = pandoc.Cell(def_blocks, pandoc.AlignDefault, 1, 1, pandoc.Attr())
-          return pandoc.Row(pandoc.List:new({ c1, c2 }))
-        end
-
-        local head_rows = pandoc.List:new({
-          make_deflist_row(items_data[1][1], items_data[1][2])
-        })
-        local body_rows = pandoc.List:new()
-        for i = 2, #items_data do
-          body_rows:insert(make_deflist_row(items_data[i][1], items_data[i][2]))
-        end
-
-        local head = pandoc.TableHead(head_rows)
-        local body = { attr = pandoc.Attr(), row_head_columns = 0, head = {}, body = body_rows }
-        local foot = pandoc.TableFoot(pandoc.List:new())
-        local tbl = pandoc.Table(
-          { long = {} },
-          col_specs, head, { body }, foot
-        )
-        tbl = split_table_br(tbl)
-        out:insert(tbl)
-      end
+      out:insert(block)
 
     elseif block.t == "BulletList" then
       local level = (ctx.bullet_depth or 0) + 1
