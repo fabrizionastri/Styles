@@ -614,55 +614,6 @@ local function convert_blocks(blocks, state, ctx)
       end
       out:insert(tbl)
 
-    elseif block.t == "DefinitionList" then
-      -- Convert definition list to a 2-column Word table.
-      -- First item = header row; remaining items = body rows.
-      local items_data = pandoc.List:new()
-      for _, item in ipairs(block.content) do
-        local term_inlines = item[1]
-        local defs = item[2]
-        local def_blocks = pandoc.List:new()
-        for _, defn in ipairs(defs) do
-          for _, b in ipairs(defn) do def_blocks:insert(b) end
-        end
-        local converted_def = convert_blocks(def_blocks, state, ctx)
-        local cleaned_term, _ = parse_inline_style_suffix(term_inlines)
-        items_data:insert({ cleaned_term, converted_def })
-      end
-
-      if #items_data > 0 then
-        local col_specs = {
-          { pandoc.AlignDefault, 0.25 },
-          { pandoc.AlignDefault, 0.75 },
-        }
-        local function make_deflist_row(term_inlines, def_blocks)
-          local c1 = pandoc.Cell(
-            pandoc.List:new({ pandoc.Plain(term_inlines) }),
-            pandoc.AlignDefault, 1, 1, pandoc.Attr()
-          )
-          local c2 = pandoc.Cell(def_blocks, pandoc.AlignDefault, 1, 1, pandoc.Attr())
-          return pandoc.Row(pandoc.List:new({ c1, c2 }))
-        end
-
-        local head_rows = pandoc.List:new({
-          make_deflist_row(items_data[1][1], items_data[1][2])
-        })
-        local body_rows = pandoc.List:new()
-        for i = 2, #items_data do
-          body_rows:insert(make_deflist_row(items_data[i][1], items_data[i][2]))
-        end
-
-        local head = pandoc.TableHead(head_rows)
-        local body = { attr = pandoc.Attr(), row_head_columns = 0, head = {}, body = body_rows }
-        local foot = pandoc.TableFoot(pandoc.List:new())
-        local tbl = pandoc.Table(
-          { long = {} },
-          col_specs, head, { body }, foot
-        )
-        tbl = split_table_br(tbl)
-        out:insert(tbl)
-      end
-
     elseif block.t == "BulletList" then
       local level = (ctx.bullet_depth or 0) + 1
       local bullet_style = BULLET_STYLE_BY_LEVEL[level] or "List 3"

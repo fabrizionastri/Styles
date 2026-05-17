@@ -23,6 +23,8 @@ local UNWRAP_STYLE_SET = {
   ["footnote text"] = true,
 }
 
+local LARGE_TABLE_THRESHOLD = 120
+
 local BLOCK_STYLE_SET = {
   ["Comments"] = true,
   ["Published"] = true,
@@ -492,129 +494,96 @@ local function convert_blocks(blocks, state)
       for _, cell in ipairs(row) do observe_len(cell) end
     end
 
-    -- Decide: 2-column table where any cell has complex content → definition list.
-    local function is_cell_complex(cblocks)
-      if #cblocks > 1 then return true end
-      for _, b in ipairs(cblocks) do
-        if b.t == "Table" or b.t == "BulletList" or b.t == "OrderedList"
-           or b.t == "BlockQuote" then
-          return true
-        end
-      end
-      return false
-    end
+    if max_cell_len > LARGE_TABLE_THRESHOLD then
+      -- Large table: ::: LargeTable format with trailing " |" / " ||" markers.
+      local vlines = { "::: LargeTable", "" }
 
-    local use_deflist = col_count == 2
-    if use_deflist then
-      use_deflist = false
-      for _, cb in ipairs(header_cell_blocks) do
-        if is_cell_complex(cb) then use_deflist = true; break end
-      end
-      if not use_deflist then
-        for _, row in ipairs(body_cell_blocks) do
-          for _, cb in ipairs(row) do
-            if is_cell_complex(cb) then use_deflist = true; break end
-          end
-          if use_deflist then break end
+      local function render_large_row(cell_blocks_row)
+        for i, cell_blocks in ipairs(cell_blocks_row) do
+          local marker = (i == col_count) and " ||" or " |"
+          local md = cell_blocks_to_markdown(cell_blocks)
+          local clines = split_lines(md)
+          if #clines == 0 then clines = { " " } end
+          clines[#clines] = clines[#clines] .. marker
+          for _, l in ipairs(clines) do vlines[#vlines + 1] = l end
         end
-      end
-    end
-
-    if use_deflist then
-      local function make_deflist_item(term_cblocks, def_cblocks)
-        local term_inlines = pandoc.List:new()
-        for _, b in ipairs(term_cblocks) do
-          if b.t == "Para" or b.t == "Plain" then
-            for _, inl in ipairs(b.content) do term_inlines:insert(inl) end
-            break
-          elseif b.t == "Header" then
-            for _, inl in ipairs(b.content) do term_inlines:insert(inl) end
-            break
-          end
-        end
-        return { term_inlines, { def_cblocks } }
+        vlines[#vlines + 1] = ""
       end
 
-      local items = {}
-      if #header_cell_blocks >= 2 then
-        items[#items + 1] = make_deflist_item(header_cell_blocks[1], header_cell_blocks[2])
+      render_large_row(header_cell_blocks)
+      for _, row in ipairs(body_cell_blocks) do render_large_row(row) end
+      vlines[#vlines + 1] = ":::"
+
+      return pandoc.RawBlock("markdown", "\n" .. table.concat(vlines, "\n"))
+    else
+      -- Small table: standard GFM pipe table.
+      local function normalize_cells(cells)
+        while #cells < col_count do cells[#cells + 1] = " " end
+        if #cells > col_count then
+          local clipped = {}
+          for i = 1, col_count do clipped[i] = cells[i] end
+          return clipped
+        end
+        return cells
       end
+
+      local header_cells = {}
+      for _, c in ipairs(header_cell_blocks) do
+        header_cells[#header_cells + 1] = escape_pipe_cell(cell_blocks_to_flat(c))
+      end
+      header_cells = normalize_cells(header_cells)
+
+      local body_cells = {}
       for _, row in ipairs(body_cell_blocks) do
-        if #row >= 2 then
-          items[#items + 1] = make_deflist_item(row[1], row[2])
+        local row_cells = {}
+        for _, c in ipairs(row) do
+          row_cells[#row_cells + 1] = escape_pipe_cell(cell_blocks_to_flat(c))
+        end
+        body_cells[#body_cells + 1] = normalize_cells(row_cells)
+      end
+
+      local function display_width(text)
+        local value = text or ""
+        if pandoc.text and pandoc.text.len then return pandoc.text.len(value) end
+        return #value
+      end
+
+      local function right_pad(text, target_width)
+        local value = text or ""
+        local missing = target_width - display_width(value)
+        if missing > 0 then return value .. string.rep(" ", missing) end
+        return value
+      end
+
+      local col_widths = {}
+      local function observe_widths(row)
+        for i = 1, col_count do
+          local width = display_width(row[i] or " ")
+          if not col_widths[i] or width > col_widths[i] then col_widths[i] = width end
         end
       end
 
-      return pandoc.DefinitionList(items)
-    end
+      observe_widths(header_cells)
+      for _, row in ipairs(body_cells) do observe_widths(row) end
+      for i = 1, col_count do if col_widths[i] < 3 then col_widths[i] = 3 end end
 
-    -- Standard GFM pipe table.
-    local function normalize_cells(cells)
-      while #cells < col_count do cells[#cells + 1] = " " end
-      if #cells > col_count then
-        local clipped = {}
-        for i = 1, col_count do clipped[i] = cells[i] end
-        return clipped
+      local function render_row(row)
+        local rendered = {}
+        for i = 1, col_count do
+          rendered[#rendered + 1] = right_pad(row[i] or " ", col_widths[i])
+        end
+        return "| " .. table.concat(rendered, " | ") .. " |"
       end
-      return cells
+
+      local lines = {}
+      lines[#lines + 1] = render_row(header_cells)
+      local sep = {}
+      for i = 1, col_count do sep[#sep + 1] = string.rep("-", col_widths[i]) end
+      lines[#lines + 1] = "| " .. table.concat(sep, " | ") .. " |"
+      for _, row in ipairs(body_cells) do lines[#lines + 1] = render_row(row) end
+
+      return pandoc.RawBlock("markdown", "\n" .. table.concat(lines, "\n"))
     end
-
-    local header_cells = {}
-    for _, c in ipairs(header_cell_blocks) do
-      header_cells[#header_cells + 1] = escape_pipe_cell(cell_blocks_to_flat(c))
-    end
-    header_cells = normalize_cells(header_cells)
-
-    local body_cells = {}
-    for _, row in ipairs(body_cell_blocks) do
-      local row_cells = {}
-      for _, c in ipairs(row) do
-        row_cells[#row_cells + 1] = escape_pipe_cell(cell_blocks_to_flat(c))
-      end
-      body_cells[#body_cells + 1] = normalize_cells(row_cells)
-    end
-
-    local function display_width(text)
-      local value = text or ""
-      if pandoc.text and pandoc.text.len then return pandoc.text.len(value) end
-      return #value
-    end
-
-    local function right_pad(text, target_width)
-      local value = text or ""
-      local missing = target_width - display_width(value)
-      if missing > 0 then return value .. string.rep(" ", missing) end
-      return value
-    end
-
-    local col_widths = {}
-    local function observe_widths(row)
-      for i = 1, col_count do
-        local width = display_width(row[i] or " ")
-        if not col_widths[i] or width > col_widths[i] then col_widths[i] = width end
-      end
-    end
-
-    observe_widths(header_cells)
-    for _, row in ipairs(body_cells) do observe_widths(row) end
-    for i = 1, col_count do if col_widths[i] < 3 then col_widths[i] = 3 end end
-
-    local function render_row(row)
-      local rendered = {}
-      for i = 1, col_count do
-        rendered[#rendered + 1] = right_pad(row[i] or " ", col_widths[i])
-      end
-      return "| " .. table.concat(rendered, " | ") .. " |"
-    end
-
-    local lines = {}
-    lines[#lines + 1] = render_row(header_cells)
-    local sep = {}
-    for i = 1, col_count do sep[#sep + 1] = string.rep("-", col_widths[i]) end
-    lines[#lines + 1] = "| " .. table.concat(sep, " | ") .. " |"
-    for _, row in ipairs(body_cells) do lines[#lines + 1] = render_row(row) end
-
-    return pandoc.RawBlock("markdown", "\n" .. table.concat(lines, "\n"))
   end
 
   local function convert_div(div)

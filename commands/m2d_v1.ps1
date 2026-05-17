@@ -8,7 +8,7 @@ param(
 )
 
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$filterPath = Join-Path $scriptRoot "..\filters\compact_to_docx.lua"
+$filterPath = Join-Path $scriptRoot "..\filters\compact_to_docx_v1.lua"
 $referenceDoc = Join-Path $scriptRoot "..\styles\flexup_template.docx"
 $defaultInputExtension = ".md"
 $defaultOutputExtension = ".docx"
@@ -231,6 +231,135 @@ function Convert-OffsetPrefixesToStyleSuffix {
   return ($outLines -join "`n")
 }
 
+function Convert-LargeTableToGfm {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Markdown
+  )
+
+  # Convert ::: LargeTable blocks back to standard GFM pipe tables so that
+  # pandoc + compact_to_docx.lua can process them normally.
+  #
+  # Cell format  : content line(s) ending with " |"  (trailing space + pipe)
+  # Row format   : last cell of the row ends with " ||" (trailing space + double-pipe)
+  # First row    : treated as the table header.
+  # Multi-para   : blank lines within a cell are paragraph separators; each
+  #               non-blank group is joined with <br> before entering the cell.
+
+  $lines = $Markdown -replace "`r`n", "`n" -split "`n", -1
+  $outLines = [System.Collections.Generic.List[string]]::new()
+  $i = 0
+
+  while ($i -lt $lines.Length) {
+
+    if ($lines[$i] -match '^:::\s*LargeTable\s*$') {
+      $i++  # skip fence-open line
+
+      # Collect rows: list of (list of string[])  row -> cells -> content lines
+      $allRows    = [System.Collections.Generic.List[object]]::new()
+      $cellLines  = [System.Collections.Generic.List[string]]::new()
+      $rowCells   = [System.Collections.Generic.List[object]]::new()
+
+      while ($i -lt $lines.Length -and $lines[$i] -notmatch '^:::\s*$') {
+        $l = $lines[$i]; $i++
+
+        if ($l -match '^(.*) \|\|$') {
+          # End of cell AND row
+          $cellLines.Add($Matches[1])
+          $rowCells.Add($cellLines.ToArray())
+          $allRows.Add($rowCells.ToArray())
+          $cellLines = [System.Collections.Generic.List[string]]::new()
+          $rowCells  = [System.Collections.Generic.List[object]]::new()
+        }
+        elseif ($l -match '^(.*) \|$') {
+          # End of cell (row continues)
+          $cellLines.Add($Matches[1])
+          $rowCells.Add($cellLines.ToArray())
+          $cellLines = [System.Collections.Generic.List[string]]::new()
+        }
+        else {
+          $cellLines.Add($l)
+        }
+      }
+      if ($i -lt $lines.Length) { $i++ }  # skip fence-close line
+
+      if ($allRows.Count -eq 0) { continue }
+
+      $colCount = ([object[]]$allRows[0]).Count
+
+      # Flatten a cell's line array to a single GFM-safe string.
+      # Blank-line-separated groups become <br>-separated segments;
+      # lines within a group are also joined with <br>.
+      $flattenCell = [scriptblock]{
+        param([string[]]$cellLineArr)
+        $groups = [System.Collections.Generic.List[string]]::new()
+        $group  = [System.Collections.Generic.List[string]]::new()
+        foreach ($ln in $cellLineArr) {
+          if ([string]::IsNullOrWhiteSpace($ln)) {
+            if ($group.Count -gt 0) {
+              $groups.Add(($group.ToArray() -join '<br>'))
+              $group = [System.Collections.Generic.List[string]]::new()
+            }
+          } else {
+            $group.Add($ln)
+          }
+        }
+        if ($group.Count -gt 0) { $groups.Add(($group.ToArray() -join '<br>')) }
+        $flat = $groups.ToArray() -join '<br>'
+        $flat = $flat.Replace('|', '\|')   # escape pipes for GFM
+        if ([string]::IsNullOrWhiteSpace($flat)) { return ' ' }
+        return $flat.Trim()
+      }
+
+      # Build flat strings for every cell in every row.
+      $flatRows = foreach ($row in $allRows) {
+        $cells = foreach ($cellArr in [object[]]$row) {
+          & $flattenCell ([string[]]$cellArr)
+        }
+        ,@($cells)
+      }
+
+      # Compute per-column widths (minimum 3).
+      $colWidths = @(3) * $colCount
+      foreach ($row in $flatRows) {
+        $rowArr = [string[]]$row
+        for ($c = 0; $c -lt [Math]::Min($colCount, $rowArr.Length); $c++) {
+          $w = $rowArr[$c].Length
+          if ($w -gt $colWidths[$c]) { $colWidths[$c] = $w }
+        }
+      }
+
+      # Render header (first row).
+      $hArr   = [string[]]$flatRows[0]
+      $hParts = for ($c = 0; $c -lt $colCount; $c++) {
+        $v = if ($c -lt $hArr.Length) { $hArr[$c] } else { ' ' }
+        $v.PadRight($colWidths[$c])
+      }
+      $outLines.Add('| ' + ($hParts -join ' | ') + ' |')
+
+      # Separator row.
+      $sepParts = $colWidths | ForEach-Object { '-' * $_ }
+      $outLines.Add('| ' + ($sepParts -join ' | ') + ' |')
+
+      # Body rows.
+      for ($r = 1; $r -lt $flatRows.Count; $r++) {
+        $rArr   = [string[]]$flatRows[$r]
+        $rParts = for ($c = 0; $c -lt $colCount; $c++) {
+          $v = if ($c -lt $rArr.Length) { $rArr[$c] } else { ' ' }
+          $v.PadRight($colWidths[$c])
+        }
+        $outLines.Add('| ' + ($rParts -join ' | ') + ' |')
+      }
+
+      continue
+    }
+
+    $outLines.Add($lines[$i])
+    $i++
+  }
+
+  return $outLines -join "`n"
+}
 
 function Get-UniqueFilePath {
   param(
@@ -901,6 +1030,7 @@ $resolvedInput = Resolve-InputPath -PathValue $InputFile -DefaultExtension $defa
 $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $OutputFile -DefaultExtension $defaultOutputExtension
 
 $preparedMarkdown = Convert-OffsetPrefixesToStyleSuffix -InputPath $resolvedInput
+$preparedMarkdown = Convert-LargeTableToGfm -Markdown $preparedMarkdown
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("m2d_" + [System.Guid]::NewGuid().ToString("N"))
 $tempInput = Join-Path $tempRoot "input.md"
 $preparedMarkdown = Stage-MarkdownImages -Markdown $preparedMarkdown -MarkdownPath $resolvedInput -TempRoot $tempRoot
