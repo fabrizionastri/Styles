@@ -86,14 +86,91 @@ ld2d "Old Contract.docx"
 ```
 This creates `Old Contract_remapped.docx` in the same folder. Open this file in Word and verify that it looks correct before proceeding.
 
-You can also specify a different output name:
+**Convert all Markdown files in a folder to Word:**
+```
+m2d-all
+m2d-all "C:\Contracts\Templates"
+```
+With no argument, converts every `.md` file in the current folder. With a folder path, converts every `.md` file in that folder. Output files are always created alongside the source files.
+
+**Convert all Word files in a folder to Markdown:**
+```
+d2m-all
+d2m-all "C:\Contracts\Templates"
+```
+Same as above, but converts every `.docx` file to `.md`.
+
+If an output file already exists, the commands add a counter to avoid overwriting: `My Contract_1.docx`, `My Contract_2.docx`, etc.
+
+You can also specify where single-file commands should write their output:
 ```
 d2m "My Contract.docx" "output.md"
 m2d "My Contract.md" "output.docx"
 ld2d "Old Contract.docx" "New Contract"
+d2m "My Contract.docx" "."
+d2m "My Contract.docx" ".\plop"
 ```
 
 You don't need to type the file extension -- the commands will add `.docx` or `.md` automatically if you leave it out.
+
+When you do not provide a second argument, the output is created in the same folder as the input file. When you do provide one, relative paths are resolved from your current PowerShell folder:
+
+- `.` means "write here" and keeps the input file name, for example `My Contract.md`
+- `.\plop` means "write here as `plop.md`" for `d2m`, or `plop.docx` for `m2d`
+- an existing folder path means "write into that folder" and keep the input file name
+
+
+
+### Step 4. Set up the VS Code shortcut (one-time, optional)
+
+If you draft documents in Markdown and want to paste them into Outlook with formatting intact, install this keyboard shortcut. It converts the active `.md` file to HTML and places it on the Windows clipboard in a format that Outlook recognises as rich text — so paragraphs stay as paragraphs instead of turning into bullet points.
+
+**Requirements:** VS Code, plus Python and Pandoc (both covered by Steps 1 and 2 above).
+
+1. **Copy the script.** Create the folder `%APPDATA%\Code\User\scripts\` if it does not already exist, then copy `commands/md2clip.py` from this repository into it. The destination path will look like:
+   ```
+   C:\Users\<your-name>\AppData\Roaming\Code\User\scripts\md2clip.py
+   ```
+   Tip: press Win+R, type `%APPDATA%`, and press Enter to open the folder directly in Windows Explorer.
+
+2. **Create the VS Code task.** Create the file `%APPDATA%\Code\User\tasks.json` with the content below. If the file already exists, add the task object to the existing `"tasks"` array instead of replacing the whole file.
+   ```json
+   {
+     "version": "2.0.0",
+     "tasks": [
+       {
+         "label": "Copy MD as HTML",
+         "type": "process",
+         "command": "python",
+         "args": [
+           "${env:APPDATA}/Code/User/scripts/md2clip.py",
+           "${file}"
+         ],
+         "problemMatcher": [],
+         "presentation": {
+           "reveal": "silent",
+           "revealProblems": "onProblem",
+           "close": true,
+           "panel": "dedicated"
+         }
+       }
+     ]
+   }
+   ```
+
+3. **Add the keyboard shortcut.** In VS Code, press `Ctrl+Shift+P`, type `Open Keyboard Shortcuts (JSON)`, and press Enter. Add this entry to the JSON array:
+   ```json
+   {
+     "key": "ctrl+alt+c",
+     "command": "workbench.action.tasks.runTask",
+     "args": "Copy MD as HTML",
+     "when": "editorLangId == markdown"
+   }
+   ```
+
+4. **Reload VS Code.** Press `Ctrl+Shift+P`, type `Developer: Reload Window`, and press Enter. If the shortcut does not respond after reloading, close and reopen VS Code completely.
+
+**How to use it:** open any `.md` file, press `Ctrl+Alt+C`, then paste directly into an Outlook email. The formatted text will paste correctly.
 
 
 
@@ -162,6 +239,12 @@ The commands are not loaded. Either run `install_commands.ps1` again (see Step 2
 **"Input file not found"**
 Check that the file name is correct and that you are in the right folder. Use `dir` to list the files in the current folder. If the file name contains spaces, make sure to wrap it in quotes: `d2m "My Contract.docx"`.
 
+**`Ctrl+Alt+C` does nothing in a Markdown file**
+VS Code may not have loaded the new task yet. Try a full restart (close and reopen VS Code, not just a reload window). You can also verify the task is available: press `Ctrl+Shift+P`, type `Tasks: Run Task`, and check that "Copy MD as HTML" appears in the list labelled "User".
+
+**The VS Code task fails with a PowerShell error**
+Open `%APPDATA%\Code\User\tasks.json` and confirm the task has `"type": "process"`, not `"type": "shell"`. The shell type routes the command through PowerShell, which parses the file path arguments and can fail when a path contains spaces.
+
 
 
 
@@ -172,14 +255,17 @@ Everything below is detailed technical documentation for developers and advanced
 
 ## Toolchain overview
 
-| Script                               | Purpose                                            | Key dependencies                                                    |
-| ------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------- |
-| `commands/d2m.ps1`                   | DOCX to Markdown                                   | `filters/docx_to_compact.lua`                                       |
-| `commands/m2d.ps1`                   | Markdown to DOCX                                   | `filters/compact_to_docx.lua`, `styles/flexup_template.docx`        |
-| `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                       | `commands/remap_legacy_contracts.py`, `styles/flexup_template.docx` |
-| `commands/commands.ps1`              | Loads `d2m`, `m2d`, `ld2d` as PowerShell functions | --                                                                  |
-| `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile    | --                                                                  |
-| `commands/remap_legacy_contracts.py` | In-place legacy style remapping                    | `python-docx`                                                       |
+| Script                               | Purpose                                         | Key dependencies                                                    |
+| ------------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------- |
+| `commands/d2m.ps1`                   | DOCX to Markdown                                | `filters/docx_to_compact.lua`                                       |
+| `commands/m2d.ps1`                   | Markdown to DOCX                                | `filters/compact_to_docx.lua`, `styles/flexup_template.docx`        |
+| `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                    | `commands/remap_legacy_contracts.py`, `styles/flexup_template.docx` |
+| `commands/m2d-all.ps1`               | Batch Markdown to DOCX (all files in a folder)  | `m2d`                                                               |
+| `commands/d2m-all.ps1`               | Batch DOCX to Markdown (all files in a folder)  | `d2m`                                                               |
+| `commands/commands.ps1`              | Loads all commands as PowerShell functions      | --                                                                  |
+| `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile | --                                                                  |
+| `commands/remap_legacy_contracts.py` | In-place legacy style remapping                 | `python-docx`                                                       |
+| `commands/md2clip.py`                | Markdown → HTML clipboard (VS Code shortcut)    | Pandoc, PowerShell                                                  |
 
 ## Conversion commands (direct invocation)
 
@@ -203,19 +289,52 @@ powershell -ExecutionPolicy Bypass -File .\commands\ld2d.ps1 "legacy.docx"
 powershell -ExecutionPolicy Bypass -File .\commands\ld2d.ps1 "legacy.docx" "output"
 ```
 
+## Batch commands (direct invocation)
+
+**Convert all Markdown files in a folder to DOCX:**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\commands\m2d-all.ps1
+powershell -ExecutionPolicy Bypass -File .\commands\m2d-all.ps1 "C:\Contracts\Templates"
+```
+
+**Convert all DOCX files in a folder to Markdown:**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\commands\d2m-all.ps1
+powershell -ExecutionPolicy Bypass -File .\commands\d2m-all.ps1 "C:\Contracts\Templates"
+```
+
+Both batch commands process only the top-level folder (no recursion into subfolders). If an output file already exists, a counter is appended to the filename (e.g. `contract_1.docx`) to avoid overwriting.
+
+## Output path behaviour
+
+For single-file commands (`d2m`, `m2d`, `ld2d`, `dmd`, `mdm`):
+
+- with no second argument, the output is created next to the input file
+- with a second argument, relative output paths are resolved from the current PowerShell folder
+- `.` writes to the current folder using the input file's base name
+- `.\plop` writes to the current folder using `plop` as the base name
+- an existing folder path, `.` / `..`, or a path ending in a slash is treated as an output folder
+- absolute output paths are used as provided
+
+Batch commands (`d2m-all`, `m2d-all`) still create each output file alongside its source file.
+
 ## Extension inference
 
 All commands automatically add file extensions when omitted:
 
-| Command | Input default | Output default   |
-| ------- | ------------- | ---------------- |
-| `d2m`   | `.docx`       | `.md`            |
-| `m2d`   | `.md`         | `.docx`          |
-| `ld2d`  | `.docx`       | `_remapped.docx` |
+| Command   | Input default | Output default   |
+| --------- | ------------- | ---------------- |
+| `d2m`     | `.docx`       | `.md`            |
+| `m2d`     | `.md`         | `.docx`          |
+| `ld2d`    | `.docx`       | `_remapped.docx` |
+| `d2m-all` | all `.docx`   | `.md`            |
+| `m2d-all` | all `.md`     | `.docx`          |
 
 Examples:
 - `d2m "contract"` reads `contract.docx`, writes `contract.md`
 - `m2d "contract" "final"` reads `contract.md`, writes `final.docx`
+- `d2m "contract.docx" "."` reads `contract.docx`, writes `.\contract.md`
+- `d2m "contract.docx" ".\plop"` reads `contract.docx`, writes `.\plop.md`
 - `ld2d "legacy"` reads `legacy.docx`, writes `legacy_remapped.docx`
 - `ld2d "legacy.docx" "clean"` reads `legacy.docx`, writes `clean.docx`
 

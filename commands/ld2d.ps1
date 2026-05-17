@@ -36,6 +36,69 @@ function Resolve-InputPath {
   throw "Input file not found: $PathValue"
 }
 
+function Test-IsDirectoryOutputPath {
+  param([string]$PathValue)
+
+  if ([string]::IsNullOrWhiteSpace($PathValue)) {
+    return $false
+  }
+
+  $trimmed = $PathValue.Trim()
+
+  if ($trimmed -eq "." -or $trimmed -eq "..") {
+    return $true
+  }
+
+  if (Test-Path -LiteralPath $trimmed -PathType Container) {
+    return $true
+  }
+
+  return $trimmed.EndsWith([System.IO.Path]::DirectorySeparatorChar) -or
+    $trimmed.EndsWith([System.IO.Path]::AltDirectorySeparatorChar)
+}
+
+function Resolve-ExplicitOutputPath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$OutputPath,
+
+    [Parameter(Mandatory = $true)]
+    [string]$InputBase,
+
+    [Parameter(Mandatory = $true)]
+    [string]$DefaultExtension
+  )
+
+  $workingDirectory = (Get-Location).ProviderPath
+  $candidate = $OutputPath.Trim()
+
+  if (Test-IsDirectoryOutputPath -PathValue $candidate) {
+    $outputDirectory = if ([System.IO.Path]::IsPathRooted($candidate)) {
+      $candidate
+    } else {
+      Join-Path $workingDirectory $candidate
+    }
+
+    if (Test-Path -LiteralPath $outputDirectory -PathType Container) {
+      $outputDirectory = (Resolve-Path -LiteralPath $outputDirectory -ErrorAction Stop).Path
+    } else {
+      $outputDirectory = [System.IO.Path]::GetFullPath($outputDirectory)
+    }
+
+    return (Join-Path $outputDirectory ($InputBase + $DefaultExtension))
+  }
+
+  if ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($candidate))) {
+    $candidate = $candidate + $DefaultExtension
+  }
+
+  if (-not [System.IO.Path]::IsPathRooted($candidate)) {
+    $candidate = Join-Path $workingDirectory $candidate
+  }
+
+  return [System.IO.Path]::GetFullPath($candidate)
+}
+
 function Resolve-OutputPath {
   param(
     [Parameter(Mandatory = $true)]
@@ -48,17 +111,40 @@ function Resolve-OutputPath {
     [string]$DefaultExtension
   )
 
+  $inputDir = Split-Path -Parent $InputPath
+  $inputBase = [System.IO.Path]::GetFileNameWithoutExtension($InputPath)
+
   if ([string]::IsNullOrWhiteSpace($OutputPath)) {
-    $inputDir = Split-Path -Parent $InputPath
-    $inputBase = [System.IO.Path]::GetFileNameWithoutExtension($InputPath)
-    return (Join-Path $inputDir ($inputBase + "_remapped" + $DefaultExtension))
+    $resolved = Join-Path $inputDir ($inputBase + "_remapped" + $DefaultExtension)
+  } else {
+    $resolved = Resolve-ExplicitOutputPath `
+      -OutputPath $OutputPath `
+      -InputBase ($inputBase + "_remapped") `
+      -DefaultExtension $DefaultExtension
   }
 
-  if ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($OutputPath))) {
-    return ($OutputPath + $DefaultExtension)
+  $resolved = [System.IO.Path]::GetFullPath($resolved)
+
+  if (Test-Path -LiteralPath $resolved) {
+    $dir = Split-Path -Parent $resolved
+    $ext = [System.IO.Path]::GetExtension($resolved)
+    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($resolved)
+
+    if ($baseName -match '^(.+)_(\d+)$') {
+      $root = $Matches[1]
+      $counter = [int]$Matches[2] + 1
+    } else {
+      $root = $baseName
+      $counter = 1
+    }
+
+    do {
+      $resolved = Join-Path $dir "${root}_${counter}${ext}"
+      $counter++
+    } while (Test-Path -LiteralPath $resolved)
   }
 
-  return $OutputPath
+  return $resolved
 }
 
 if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) {
@@ -76,17 +162,30 @@ if (-not (Test-Path -LiteralPath $referenceDoc)) {
 $resolvedInput = Resolve-InputPath -PathValue $InputFile -DefaultExtension $defaultInputExtension
 $resolvedOutput = Resolve-OutputPath -InputPath $resolvedInput -OutputPath $OutputFile -DefaultExtension $defaultOutputExtension
 
-& pandoc `
-  -f "docx+styles" `
-  -t "docx" `
-  --lua-filter="$filterPath" `
-  --reference-doc="$referenceDoc" `
-  --no-highlight `
-  "$resolvedInput" `
-  -o "$resolvedOutput"
+$tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("ld2d_" + [System.Guid]::NewGuid().ToString("N"))
+$tempInput = Join-Path $tempDir "input.docx"
 
-if ($LASTEXITCODE -ne 0) {
-  exit $LASTEXITCODE
+try {
+  New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+  Copy-Item -LiteralPath $resolvedInput -Destination $tempInput -Force
+
+  & pandoc `
+    -f "docx+styles" `
+    -t "docx" `
+    --lua-filter="$filterPath" `
+    --reference-doc="$referenceDoc" `
+    --no-highlight `
+    "$tempInput" `
+    -o "$resolvedOutput"
+
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+}
+finally {
+  if (Test-Path -LiteralPath $tempDir) {
+    Remove-Item -LiteralPath $tempDir -Force -Recurse
+  }
 }
 
 Write-Output "Created: $resolvedOutput"

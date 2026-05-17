@@ -26,6 +26,9 @@ local UNWRAP_STYLE_SET = {
 local BLOCK_STYLE_SET = {
   ["Comments"] = true,
   ["Published"] = true,
+  ["index 1"] = true,
+  ["index 2"] = true,
+  ["index 3"] = true,
 }
 
 local STYLE_CANONICAL_MAP = {
@@ -127,7 +130,7 @@ local function append_suffix_class(inlines, alias)
 end
 
 local function inlines_from_markdown(text)
-  local doc = pandoc.read(text, "markdown")
+  local doc = pandoc.read(text, "markdown-smart")
   if #doc.blocks == 0 then
     return pandoc.List:new()
   end
@@ -143,17 +146,35 @@ local function clean_inlines(inlines, state, convert_blocks)
   for _, inl in ipairs(inlines) do
     if inl.t == "Span" then
       local span_style = get_custom_style(inl.attr)
+      local span_id = inl.attr and inl.attr.identifier or ""
       local inner = clean_inlines(inl.content, state, convert_blocks)
-      if span_style and span_style:lower():find("note reference", 1, true) then
+      if span_id ~= "" and span_id:match("^ref%-") then
+        out:insert(pandoc.Span(inner, pandoc.Attr(span_id, {}, {})))
+      elseif span_style and span_style:lower():find("note reference", 1, true) then
+        for _, s in ipairs(inner) do
+          out:insert(s)
+        end
+      elseif span_style and span_style:lower() == "hyperlink" then
         for _, s in ipairs(inner) do
           out:insert(s)
         end
       else
         out:insert(pandoc.Span(inner))
       end
+    elseif inl.t == "Link" then
+      local inner = clean_inlines(inl.content, state, convert_blocks)
+      out:insert(pandoc.Link(inner, inl.target, inl.title, inl.attr))
     elseif inl.t == "Note" then
       local note_blocks = convert_blocks(inl.content, state)
       out:insert(pandoc.Note(note_blocks))
+    elseif inl.t == "Quoted" then
+      local q = inl.quotetype == "DoubleQuote" and '"' or "'"
+      local inner = clean_inlines(inl.content, state, convert_blocks)
+      out:insert(pandoc.Str(q))
+      for _, s in ipairs(inner) do
+        out:insert(s)
+      end
+      out:insert(pandoc.Str(q))
     elseif inl.t == "SoftBreak" or inl.t == "LineBreak" then
       out:insert(pandoc.Space())
     else
@@ -197,13 +218,21 @@ local function tighten_list_item_blocks(item_blocks)
   return out
 end
 
+local function remove_md_escapes(txt)
+  txt = txt:gsub("\\%[", "[")
+  txt = txt:gsub("\\%]", "]")
+  txt = txt:gsub("\\<", "<")
+  txt = txt:gsub("\\%-", "-")
+  return txt
+end
+
 local function inlines_to_markdown_line(inlines)
   local tmp_doc = pandoc.Pandoc({ pandoc.Plain(inlines) }, pandoc.Meta({}))
-  local txt = pandoc.write(tmp_doc, "markdown")
+  local txt = pandoc.write(tmp_doc, "markdown-smart")
   txt = txt:gsub("\r\n", "\n")
   txt = trim(txt:gsub("\n+$", ""))
   txt = txt:gsub("%s*\n%s*", " ")
-  return txt
+  return remove_md_escapes(txt)
 end
 
 local function split_lines(text)
@@ -216,15 +245,6 @@ local function split_lines(text)
     lines[#lines + 1] = line
   end
   return lines
-end
-
-local function escape_pipe_cell(text)
-  local out = text or ""
-  out = out:gsub("|", "\\|")
-  if out == "" then
-    return " "
-  end
-  return out
 end
 
 local function style_block_div(style_name, content)
@@ -249,7 +269,8 @@ local function render_offset_style(content_blocks)
     return pandoc.List:new()
   end
 
-  return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
+  -- Ensure offset paragraphs are always separated from the previous block.
+  return pandoc.RawBlock("markdown", "\n" .. table.concat(lines, "\n"))
 end
 
 local function bullet_level_from_style(style_name)
@@ -365,100 +386,62 @@ local function render_ordered_items(items, level, list_style, start)
 end
 
 local function convert_blocks(blocks, state)
-  local function table_row_to_cells(row)
-    local cells = {}
-    for _, cell in ipairs(row.cells or {}) do
-      local converted = convert_blocks(cell.content or {}, state)
-      local parts = {}
-
-      for _, b in ipairs(converted) do
-        if b.t == "Para" or b.t == "Plain" then
-          parts[#parts + 1] = inlines_to_markdown_line(b.content)
-        elseif b.t == "Header" then
-          parts[#parts + 1] = inlines_to_markdown_line(b.content)
-        elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
-          local raw = trim((b.text or b.c or ""):gsub("\r\n", "\n"):gsub("\n+", " "))
-          if raw ~= "" then
-            parts[#parts + 1] = raw
-          end
-        end
-      end
-
-      local text = table.concat(parts, "<br>")
-      cells[#cells + 1] = escape_pipe_cell(text)
-    end
-    return cells
-  end
-
+  -- Rebuild a native table so pandoc owns the markdown serialization:
+  -- recurse into every cell, promote the first body row when the table
+  -- has no header (avoids an empty-header pipe table), and drop explicit
+  -- column widths so pipe/grid sizing stays content-determined and stable
+  -- across conversion round-trips.
   local function convert_table(tbl)
-    local lines = {}
+    local function rebuild_row(row)
+      local cells = pandoc.List:new()
+      for _, cell in ipairs(row.cells or {}) do
+        local content = convert_blocks(cell.content or {}, state)
+        cells:insert(pandoc.Cell(content, cell.alignment, cell.row_span, cell.col_span, cell.attr))
+      end
+      return pandoc.Row(cells, row.attr)
+    end
 
-    local header_rows = tbl.head and tbl.head.rows or {}
-    local body_rows = {}
+    local head_rows = pandoc.List:new()
+    if tbl.head and tbl.head.rows then
+      for _, row in ipairs(tbl.head.rows) do head_rows:insert(rebuild_row(row)) end
+    end
+
+    local body_rows = pandoc.List:new()
     if tbl.bodies then
       for _, body in ipairs(tbl.bodies) do
         if body.head then
-          for _, row in ipairs(body.head) do
-            body_rows[#body_rows + 1] = row
-          end
+          for _, row in ipairs(body.head) do body_rows:insert(rebuild_row(row)) end
         end
         if body.body then
-          for _, row in ipairs(body.body) do
-            body_rows[#body_rows + 1] = row
-          end
+          for _, row in ipairs(body.body) do body_rows:insert(rebuild_row(row)) end
         end
       end
     end
 
-    local header_cells = {}
-    local start_body_index = 1
-
-    if #header_rows > 0 then
-      header_cells = table_row_to_cells(header_rows[1])
-      for i = 2, #header_rows do
-        body_rows[#body_rows + 1] = header_rows[i]
-      end
-    elseif #body_rows > 0 then
-      header_cells = table_row_to_cells(body_rows[1])
-      start_body_index = 2
-    else
-      return pandoc.List:new()
+    local foot_rows = pandoc.List:new()
+    if tbl.foot and tbl.foot.rows then
+      for _, row in ipairs(tbl.foot.rows) do foot_rows:insert(rebuild_row(row)) end
     end
 
-    local col_count = #header_cells
-    if col_count == 0 then
-      return pandoc.List:new()
+    if #head_rows == 0 and #body_rows > 0 then
+      head_rows:insert(body_rows:remove(1))
     end
 
-    local function normalize_row(cells)
-      while #cells < col_count do
-        cells[#cells + 1] = " "
-      end
-      if #cells > col_count then
-        local clipped = {}
-        for i = 1, col_count do
-          clipped[i] = cells[i]
-        end
-        return clipped
-      end
-      return cells
+    local colspecs = {}
+    for i, spec in ipairs(tbl.colspecs or {}) do
+      colspecs[i] = { spec[1], nil }
     end
 
-    header_cells = normalize_row(header_cells)
-    lines[#lines + 1] = "| " .. table.concat(header_cells, " | ") .. " |"
+    local body = { attr = pandoc.Attr(), row_head_columns = 0, head = {}, body = body_rows }
 
-    local sep = {}
-    for _ = 1, col_count do
-      sep[#sep + 1] = "---"
-    end
-    lines[#lines + 1] = "| " .. table.concat(sep, " | ") .. " |"
-
-    for i = start_body_index, #body_rows do
-      local cells = normalize_row(table_row_to_cells(body_rows[i]))
-      lines[#lines + 1] = "| " .. table.concat(cells, " | ") .. " |"
-    end
-
-    return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
+    return pandoc.Table(
+      tbl.caption,
+      colspecs,
+      pandoc.TableHead(head_rows),
+      { body },
+      pandoc.TableFoot(foot_rows),
+      tbl.attr
+    )
   end
 
   local function convert_div(div)

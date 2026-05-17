@@ -10,6 +10,9 @@ local ALIAS_TO_STYLE = {
   ["List"] = "List",
   ["List-2"] = "List 2",
   ["List-3"] = "List 3",
+  ["index-1"] = "index 1",
+  ["index-2"] = "index 2",
+  ["index-3"] = "index 3",
 }
 
 local BULLET_STYLE_BY_LEVEL = {
@@ -18,8 +21,60 @@ local BULLET_STYLE_BY_LEVEL = {
   [3] = "List 3",
 }
 
+local DEFAULT_XREF_SWITCHES = "\\h\\n"
+local XREF_MARKER_PREFIX = "[[XRF:"
+local XREF_MARKER_SUFFIX = "]]"
+
 local function trim(s)
   return (s:gsub("^%s+", ""):gsub("%s+$", ""))
+end
+
+local function normalize_xref_switches(raw)
+  local tokens = {}
+  if raw then
+    for token in raw:gmatch("\\%a+") do
+      tokens[#tokens + 1] = token
+    end
+  end
+
+  if #tokens == 0 then
+    return nil
+  end
+
+  return table.concat(tokens, "")
+end
+
+local function mark_xref_link(link)
+  local target = link.target or ""
+  if not target:match("^#") then
+    return link
+  end
+
+  local target_id = target:sub(2)
+  local title = link.title or ""
+  local switches = nil
+
+  local explicit = title:match("^xref:%s*(.-)%s*$")
+  if explicit ~= nil then
+    switches = normalize_xref_switches(explicit)
+    if not switches then
+      switches = DEFAULT_XREF_SWITCHES
+    end
+  elseif target_id:match("^_Ref") or target_id:match("^ref%-") then
+    switches = DEFAULT_XREF_SWITCHES
+  end
+
+  if not switches then
+    return link
+  end
+
+  local marker = XREF_MARKER_PREFIX .. switches .. XREF_MARKER_SUFFIX
+  local marked = pandoc.List:new({ pandoc.Str(marker) })
+  for _, inl in ipairs(link.content) do
+    marked:insert(inl)
+  end
+
+  return pandoc.Link(marked, link.target, "", link.attr)
 end
 
 local function enum_name(v)
@@ -58,7 +113,7 @@ local function alias_to_style(alias)
 end
 
 local function inlines_from_markdown(text)
-  local doc = pandoc.read(text, "markdown")
+  local doc = pandoc.read(text, "markdown-smart")
   if #doc.blocks == 0 then
     return pandoc.List:new()
   end
@@ -67,6 +122,15 @@ local function inlines_from_markdown(text)
     return b.content
   end
   return pandoc.List:new({ pandoc.Str(text) })
+end
+
+local function inlines_to_markdown_line(inlines)
+  local tmp_doc = pandoc.Pandoc({ pandoc.Plain(inlines) }, pandoc.Meta({}))
+  local txt = pandoc.write(tmp_doc, "markdown-smart")
+  txt = txt:gsub("\r\n", "\n")
+  txt = trim(txt:gsub("\n+$", ""))
+  txt = txt:gsub("%s*\n%s*", " ")
+  return txt
 end
 
 local function styled_div(style_name, blocks)
@@ -153,6 +217,68 @@ local function line_has_compact_marker(inlines)
     or text:match("^[ivxlcdmIVXLCDM]+%.%s+.+$") ~= nil
 end
 
+local function line_has_style_suffix(inlines)
+  local idx = #inlines
+  while idx > 0 and (inlines[idx].t == "Space" or inlines[idx].t == "SoftBreak") do
+    idx = idx - 1
+  end
+  if idx == 0 or inlines[idx].t ~= "Str" then
+    return false
+  end
+
+  local token = str_text(inlines[idx])
+  if token:match("^%{%.([%w%-%_]+)%}$") then
+    return true
+  end
+  if token:match('^%{custom%-style="([^"]+)"%}$') then
+    return true
+  end
+  return false
+end
+
+local function extract_anchor_spans(inlines)
+  local anchors = pandoc.List:new()
+  for _, inl in ipairs(inlines) do
+    if inl.t == "Span" then
+      local id = inl.attr and inl.attr.identifier or ""
+      if id ~= "" and id:match("^ref%-") then
+        anchors:insert(inl)
+      end
+    end
+  end
+  return anchors
+end
+
+local function append_anchors(inlines, anchors)
+  if #anchors == 0 then
+    return inlines
+  end
+  local out = pandoc.List:new()
+  for _, inl in ipairs(inlines) do
+    out:insert(inl)
+  end
+  for _, a in ipairs(anchors) do
+    out:insert(pandoc.Space())
+    out:insert(a)
+  end
+  return out
+end
+
+local function remove_anchor_spans(inlines)
+  local out = pandoc.List:new()
+  for _, inl in ipairs(inlines) do
+    if inl.t == "Span" then
+      local id = inl.attr and inl.attr.identifier or ""
+      if id ~= "" and id:match("^ref%-") then
+        goto continue
+      end
+    end
+    out:insert(inl)
+    ::continue::
+  end
+  return out
+end
+
 local function convert_compact_clause_line(inlines, state)
   local cleaned, suffix_style = parse_inline_style_suffix(inlines)
 
@@ -160,25 +286,27 @@ local function convert_compact_clause_line(inlines, state)
     return styled_div(suffix_style, { pandoc.Para(cleaned) }), nil
   end
 
-  local text = trim(utils.stringify(cleaned))
+  local anchors = extract_anchor_spans(cleaned)
+  local without_anchors = remove_anchor_spans(cleaned)
+  local text_md = inlines_to_markdown_line(without_anchors)
 
   if not state.in_appendix then
-    local article2 = text:match("^%d+%.%d+%.?%s+(.+)$")
+    local article2 = text_md:match("^%d+%.%d+%.?%s+(.+)$")
     if article2 then
-      return styled_div("Article 2", { pandoc.Para(inlines_from_markdown(article2)) }), nil
+      return styled_div("Article 2", { pandoc.Para(append_anchors(inlines_from_markdown(article2), anchors)) }), nil
     end
   end
 
-  local alpha = text:match("^[a-zA-Z]%)%s+(.+)$")
+  local alpha = text_md:match("^[a-zA-Z]%)%s+(.+)$")
   if alpha then
     local style = state.in_appendix and "Appendix 4" or "Article 3"
-    return styled_div(style, { pandoc.Para(inlines_from_markdown(alpha)) }), nil
+    return styled_div(style, { pandoc.Para(append_anchors(inlines_from_markdown(alpha), anchors)) }), nil
   end
 
-  local roman = text:match("^[ivxlcdmIVXLCDM]+%.%s+(.+)$")
+  local roman = text_md:match("^[ivxlcdmIVXLCDM]+%.%s+(.+)$")
   if roman then
     local style = state.in_appendix and "Appendix 5" or "Article 4"
-    return styled_div(style, { pandoc.Para(inlines_from_markdown(roman)) }), nil
+    return styled_div(style, { pandoc.Para(append_anchors(inlines_from_markdown(roman), anchors)) }), nil
   end
 
   return nil, cleaned
@@ -251,38 +379,38 @@ local function ordered_list_style(ol, state)
 end
 
 local function resolve_header_style(header, state)
-  local text = trim(utils.stringify(header.content))
+  local text_md = inlines_to_markdown_line(header.content)
 
   if header.level == 1 then
-    local appendix_title = text:match("^Appendix%s+%d+%.%s+(.+)$")
+    local appendix_title = text_md:match("^Appendix%s+%d+%.%s+(.+)$")
     if appendix_title then
-      return "Appendix 1", appendix_title
+      return "Appendix 1", inlines_from_markdown(appendix_title)
     end
     return nil, nil
   end
 
   if header.level == 2 then
-    local section_roman = text:match("^Section%s+[IVXLCDM]+%.%s+(.+)$")
+    local section_roman = text_md:match("^Section%s+[IVXLCDM]+%.%s+(.+)$")
     if section_roman then
-      return "Section", section_roman
+      return "Section", inlines_from_markdown(section_roman)
     end
-    local section_alpha = text:match("^Section%s+[A-Z]+%.%s+(.+)$")
+    local section_alpha = text_md:match("^Section%s+[A-Z]+%.%s+(.+)$")
     if section_alpha then
-      return "Appendix 2", section_alpha
+      return "Appendix 2", inlines_from_markdown(section_alpha)
     end
     return nil, nil
   end
 
   if header.level == 3 then
-    local article_title = text:match("^Article%s+%d+%.%s+(.+)$")
+    local article_title = text_md:match("^Article%s+%d+%.%s+(.+)$")
     if article_title then
-      return "Article 1", article_title
+      return "Article 1", inlines_from_markdown(article_title)
     end
 
     if state.in_appendix then
-      local appendix3_title = text:match("^%d+%.%s+(.+)$")
+      local appendix3_title = text_md:match("^%d+%.%s+(.+)$")
       if appendix3_title then
-        return "Appendix 3", appendix3_title
+        return "Appendix 3", inlines_from_markdown(appendix3_title)
       end
     end
     return nil, nil
@@ -298,7 +426,7 @@ local function convert_blocks(blocks, state, ctx)
     if block.t == "Header" then
       local style_name, stripped = resolve_header_style(block, state)
       if style_name then
-        append_blocks(out, styled_div(style_name, { pandoc.Para(inlines_from_markdown(stripped)) }))
+        append_blocks(out, styled_div(style_name, { pandoc.Para(stripped) }))
         if style_name == "Appendix 1" then
           state.in_appendix = true
         end
@@ -311,7 +439,7 @@ local function convert_blocks(blocks, state, ctx)
       local has_compact_multiline = false
       if #lines > 1 then
         for _, line in ipairs(lines) do
-          if line_has_compact_marker(line) then
+          if line_has_compact_marker(line) or line_has_style_suffix(line) then
             has_compact_multiline = true
             break
           end
@@ -381,6 +509,54 @@ local function convert_blocks(blocks, state, ctx)
         out:insert(pandoc.OrderedList(new_items, block.listAttributes))
       end
 
+    elseif block.t == "Table" then
+      -- Recurse into every cell so styled cell content (::: Comments,
+      -- bullet lists, compact clause markers) is mapped to Word styles,
+      -- then rebuild the table so the conversion is captured reliably.
+      local function rebuild_table_row(row)
+        local cells = pandoc.List:new()
+        for _, cell in ipairs(row.cells or {}) do
+          local content = convert_blocks(cell.content or {}, state, { bullet_depth = 0 })
+          cells:insert(pandoc.Cell(content, cell.alignment, cell.row_span, cell.col_span, cell.attr))
+        end
+        return pandoc.Row(cells, row.attr)
+      end
+      local function rebuild_table_rows(rows)
+        local result = pandoc.List:new()
+        if rows then
+          for _, row in ipairs(rows) do result:insert(rebuild_table_row(row)) end
+        end
+        return result
+      end
+
+      local head_rows = rebuild_table_rows(block.head and block.head.rows)
+      local body_rows = pandoc.List:new()
+      if block.bodies then
+        for _, tbody in ipairs(block.bodies) do
+          for _, r in ipairs(rebuild_table_rows(tbody.head)) do body_rows:insert(r) end
+          for _, r in ipairs(rebuild_table_rows(tbody.body)) do body_rows:insert(r) end
+        end
+      end
+      local foot_rows = rebuild_table_rows(block.foot and block.foot.rows)
+
+      local colspecs = block.colspecs
+      if #colspecs == 2 then
+        colspecs = {
+          { pandoc.AlignDefault, 0.25 },
+          { pandoc.AlignDefault, 0.75 },
+        }
+      end
+
+      local tbody = { attr = pandoc.Attr(), row_head_columns = 0, head = {}, body = body_rows }
+      out:insert(pandoc.Table(
+        block.caption,
+        colspecs,
+        pandoc.TableHead(head_rows),
+        { tbody },
+        pandoc.TableFoot(foot_rows),
+        block.attr
+      ))
+
     elseif block.t == "BulletList" then
       local level = (ctx.bullet_depth or 0) + 1
       local bullet_style = BULLET_STYLE_BY_LEVEL[level] or "List 3"
@@ -404,6 +580,10 @@ local function convert_blocks(blocks, state, ctx)
 end
 
 function Pandoc(doc)
+  doc = doc:walk({
+    Link = mark_xref_link,
+  })
+
   local state = { in_appendix = false }
   local blocks = convert_blocks(doc.blocks, state, { bullet_depth = 0 })
   return pandoc.Pandoc(blocks, doc.meta)
