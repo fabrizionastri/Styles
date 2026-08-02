@@ -9,6 +9,7 @@ param(
 
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $filterPath = Join-Path $scriptRoot "..\filters\docx_to_compact.lua"
+$ErrorActionPreference = 'Stop'
 $defaultInputExtension = ".docx"
 $defaultOutputExtension = ".md"
 
@@ -21,18 +22,38 @@ function Resolve-InputPath {
     [string]$DefaultExtension
   )
 
-  if (Test-Path -LiteralPath $PathValue) {
-    return (Resolve-Path -LiteralPath $PathValue -ErrorAction Stop).Path
-  }
+  $resolved = $null
 
-  if ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($PathValue))) {
+  if (Test-Path -LiteralPath $PathValue -PathType Leaf) {
+    $resolved = (Resolve-Path -LiteralPath $PathValue -ErrorAction Stop).Path
+  }
+  elseif ([string]::IsNullOrWhiteSpace([System.IO.Path]::GetExtension($PathValue))) {
     $withExt = $PathValue + $DefaultExtension
-    if (Test-Path -LiteralPath $withExt) {
-      return (Resolve-Path -LiteralPath $withExt -ErrorAction Stop).Path
+    if (Test-Path -LiteralPath $withExt -PathType Leaf) {
+      $resolved = (Resolve-Path -LiteralPath $withExt -ErrorAction Stop).Path
     }
   }
 
-  throw "Input file not found: $PathValue"
+  if (-not $resolved) {
+    # Report where a relative path actually landed. The usual cause is running
+    # the command from inside the folder that the path itself already names.
+    $attempted = $PathValue
+    try {
+      $attempted = [System.IO.Path]::GetFullPath(
+        [System.IO.Path]::Combine($PWD.ProviderPath, $PathValue))
+    }
+    catch {
+      $attempted = $PathValue
+    }
+    throw "Input file not found: $PathValue (looked for '$attempted')"
+  }
+
+  $actualExtension = [System.IO.Path]::GetExtension($resolved)
+  if ($actualExtension -ne $DefaultExtension) {
+    throw "This command reads $DefaultExtension files, but got '$actualExtension': $resolved"
+  }
+
+  return $resolved
 }
 
 function Test-IsDirectoryOutputPath {
@@ -872,8 +893,9 @@ try {
   [System.IO.File]::WriteAllText($resolvedOutput, $rendered, $utf8NoBom)
 }
 finally {
+  # Cleanup must never mask the failure that got us here.
   if (Test-Path -LiteralPath $tempRoot) {
-    Remove-Item -LiteralPath $tempRoot -Force -Recurse
+    try { Remove-Item -LiteralPath $tempRoot -Force -Recurse } catch { }
   }
 }
 
