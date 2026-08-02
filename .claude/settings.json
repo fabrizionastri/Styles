@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk 'length\\($0\\)>200 {print NR\": [long line \"length\\($0\\)\" chars] \"substr\\($0,1,80\\)\"...\"; next} {print NR\": \"$0}' \"FlexUp Receivables Transfer SC • 2026-07-31 FNA.md\")",
+      "Bash(pandoc -f \"markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart\" -t plain \"c:/Users/fabri/FlexUp/FlexUp - Documents/Legal/Styles/bug/FlexUp Receivables Transfer SC • 2026-07-31 FNA.md\")",
+      "Bash(pandoc -f \"markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart\" -t native \"c:/Users/fabri/FlexUp/FlexUp - Documents/Legal/Styles/bug/FlexUp Receivables Transfer SC • 2026-07-31 FNA.md\" -o ast.txt)",
+      "Bash(awk -F: '{print $1\": \"substr\\($2,1,60\\)}')",
+      "Bash(pandoc --list-extensions=markdown)",
+      "Bash(pandoc -f \"docx+styles\" -t native --wrap=none --lua-filter=\"c:/Users/fabri/FlexUp/FlexUp - Documents/Legal/Styles/filters/docx_to_compact.lua\" t3.docx)",
+      "Bash(pandoc -f \"docx+styles\" -t \"markdown+fenced_divs-smart-simple_tables-multiline_tables\" --wrap=none --lua-filter=\"c:/Users/fabri/FlexUp/FlexUp - Documents/Legal/Styles/filters/docx_to_compact.lua\" t3.docx)",
+      "PowerShell($sp = \"C:\\\\Users\\\\fabri\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-fabri-FlexUp-FlexUp---Documents-Legal-Styles\\\\d3c04010-86c4-4575-a60e-662b4459103f\\\\scratchpad\"; & \"c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\commands\\\\d2m.ps1\" \"$sp\\\\t3.docx\" \"$sp\\\\t3_back.md\")",
+      "Bash(pandoc -f \"markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart\" -t native t3_back_1.md)",
+      "Bash(pandoc -f \"markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart\" -t native fixed.md)",
+      "PowerShell($sp = \"C:\\\\Users\\\\fabri\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-fabri-FlexUp-FlexUp---Documents-Legal-Styles\\\\d3c04010-86c4-4575-a60e-662b4459103f\\\\scratchpad\"; & \"c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\commands\\\\m2d.ps1\" \"$sp\\\\fixed.md\" \"$sp\\\\fixed.docx\")",
+      "Bash(pandoc -f \"markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart\" -t native --lua-filter=\"c:/Users/fabri/FlexUp/FlexUp - Documents/Legal/Styles/filters/compact_to_docx.lua\" fixed.md -o ast3.txt)"
+    ]
+  }
+}

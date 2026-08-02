@@ -247,6 +247,18 @@ local function split_lines(text)
   return lines
 end
 
+-- Raw markdown blocks carry a trailing blank line so the next block is never
+-- read back as a lazy continuation of the last list item. That blank line is
+-- separation between siblings, so drop it when re-indenting a raw block into
+-- an enclosing list item.
+local function split_lines_trimmed(text)
+  local lines = split_lines(text)
+  while #lines > 0 and lines[#lines]:match("^%s*$") do
+    table.remove(lines)
+  end
+  return lines
+end
+
 local function style_block_div(style_name, content)
   return pandoc.Div(content, pandoc.Attr("", { style_to_alias(style_name) }, {}))
 end
@@ -314,7 +326,7 @@ local function render_bullet_items(items, level, style_hints)
         end
       elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
         local prefix = string.rep(" ", item_level * 2)
-        for _, line in ipairs(split_lines(b.text or b.c or "")) do
+        for _, line in ipairs(split_lines_trimmed(b.text or b.c or "")) do
           lines[#lines + 1] = prefix .. line
         end
       end
@@ -367,7 +379,7 @@ local function render_ordered_items(items, level, list_style, start)
         end
       elseif b.t == "RawBlock" and enum_name(b.format) == "markdown" then
         local prefix = string.rep(" ", level * 4)
-        for _, line in ipairs(split_lines(b.text or b.c or "")) do
+        for _, line in ipairs(split_lines_trimmed(b.text or b.c or "")) do
           local is_already_structured = line:match("^%s*%-%s")
             or line:match("^%s*[A-Za-z]%)%s")
             or line:match("^%s*[ivxlcdmIVXLCDM]+%.%s")
@@ -383,6 +395,85 @@ local function render_ordered_items(items, level, list_style, start)
   end
 
   return lines
+end
+
+-- Two-column term/definition tables round-trip as a "::: Definitions" div
+-- wrapping a definition list. Grid tables lose the block structure of a
+-- multi-paragraph cell, because a fenced div or a list inside a cell only
+-- starts a new block after a blank line; a definition list keeps every block
+-- separate and survives hand-editing.
+local function cell_blocks(cell)
+  return cell.content or {}
+end
+
+local function blocks_are_empty(blocks)
+  return trim(utils.stringify(blocks)) == ""
+end
+
+local function single_nonempty_paragraph(blocks)
+  if #blocks ~= 1 then
+    return nil
+  end
+  local b = blocks[1]
+  if b.t ~= "Para" and b.t ~= "Plain" then
+    return nil
+  end
+  if trim(utils.stringify(b.content)) == "" then
+    return nil
+  end
+  return b.content
+end
+
+local function plain_two_cell_row(row)
+  local cells = row.cells or {}
+  if #cells ~= 2 then
+    return nil, nil
+  end
+  for _, cell in ipairs(cells) do
+    if (cell.row_span or 1) ~= 1 or (cell.col_span or 1) ~= 1 then
+      return nil, nil
+    end
+  end
+  return cells[1], cells[2]
+end
+
+local function table_to_definitions_div(head_rows, body_rows, foot_rows)
+  if #head_rows ~= 1 or #body_rows == 0 or #foot_rows > 0 then
+    return nil
+  end
+
+  local items = pandoc.List:new()
+
+  local function add_row(row)
+    local first, second = plain_two_cell_row(row)
+    if not first then
+      return false
+    end
+    local term = single_nonempty_paragraph(cell_blocks(first))
+    if not term then
+      return false
+    end
+    local definition = cell_blocks(second)
+    if blocks_are_empty(definition) then
+      return false
+    end
+    items:insert({ term, { definition } })
+    return true
+  end
+
+  if not add_row(head_rows[1]) then
+    return nil
+  end
+  for _, row in ipairs(body_rows) do
+    if not add_row(row) then
+      return nil
+    end
+  end
+
+  return pandoc.Div(
+    { pandoc.DefinitionList(items) },
+    pandoc.Attr("", { "Definitions" }, {})
+  )
 end
 
 local function convert_blocks(blocks, state)
@@ -425,6 +516,11 @@ local function convert_blocks(blocks, state)
 
     if #head_rows == 0 and #body_rows > 0 then
       head_rows:insert(body_rows:remove(1))
+    end
+
+    local as_definitions = table_to_definitions_div(head_rows, body_rows, foot_rows)
+    if as_definitions then
+      return as_definitions
     end
 
     local colspecs = {}
@@ -600,7 +696,7 @@ local function convert_blocks(blocks, state)
     if list_style == "LowerAlpha" or list_style == "LowerRoman" then
       local lines = render_ordered_items(new_items, 1, list_style, start)
       if #lines > 0 then
-        return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
+        return pandoc.RawBlock("markdown", table.concat(lines, "\n") .. "\n")
       end
     end
 
@@ -625,7 +721,7 @@ local function convert_blocks(blocks, state)
 
     local lines = render_bullet_items(new_items, 1, style_hints)
     if #lines > 0 then
-      return pandoc.RawBlock("markdown", table.concat(lines, "\n"))
+      return pandoc.RawBlock("markdown", table.concat(lines, "\n") .. "\n")
     end
     return pandoc.BulletList(new_items)
   end

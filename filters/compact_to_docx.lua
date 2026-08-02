@@ -32,8 +32,8 @@ end
 local function normalize_xref_switches(raw)
   local tokens = {}
   if raw then
-    for token in raw:gmatch("\\%a+") do
-      tokens[#tokens + 1] = token
+    for Token in raw:gmatch("\\%a+") do
+      tokens[#tokens + 1] = Token
     end
   end
 
@@ -168,8 +168,8 @@ local function parse_inline_style_suffix(inlines)
     return out, nil
   end
 
-  local token = str_text(out[idx])
-  local class_alias = token:match("^%{%.([%w%-%_]+)%}$")
+  local Token = str_text(out[idx])
+  local class_alias = Token:match("^%{%.([%w%-%_]+)%}$")
   if class_alias then
     out:remove(idx)
     if #out > 0 and out[#out].t == "Space" then
@@ -178,7 +178,7 @@ local function parse_inline_style_suffix(inlines)
     return out, alias_to_style(class_alias)
   end
 
-  local explicit_style = token:match('^%{custom%-style="([^"]+)"%}$')
+  local explicit_style = Token:match('^%{custom%-style="([^"]+)"%}$')
   if explicit_style then
     out:remove(idx)
     if #out > 0 and out[#out].t == "Space" then
@@ -226,11 +226,11 @@ local function line_has_style_suffix(inlines)
     return false
   end
 
-  local token = str_text(inlines[idx])
-  if token:match("^%{%.([%w%-%_]+)%}$") then
+  local Token = str_text(inlines[idx])
+  if Token:match("^%{%.([%w%-%_]+)%}$") then
     return true
   end
-  if token:match('^%{custom%-style="([^"]+)"%}$') then
+  if Token:match('^%{custom%-style="([^"]+)"%}$') then
     return true
   end
   return false
@@ -419,6 +419,80 @@ local function resolve_header_style(header, state)
   return nil, nil
 end
 
+-- A "::: Definitions" div holds a definition list that stands in for a
+-- two-column term/definition table. Grid tables cannot carry multi-block
+-- cells reliably (a fenced div or a list only starts a new block after a
+-- blank line, which the grid writer does not guarantee), so the markdown
+-- keeps the definition-list form and the table is rebuilt here.
+local function is_definitions_div(div)
+  local style = get_custom_style(div.attr)
+  if style == "Definitions" then
+    return true
+  end
+  for _, cls in ipairs(div.attr.classes or {}) do
+    if cls == "Definitions" or cls == "definitions" then
+      return true
+    end
+  end
+  return false
+end
+
+local function definitions_div_to_table(div, state, convert)
+  local dl = nil
+  for _, b in ipairs(div.content) do
+    if b.t == "DefinitionList" then
+      dl = b
+      break
+    end
+  end
+  if not dl or #dl.content == 0 then
+    return nil
+  end
+
+  local function make_row(item)
+    local term_blocks = convert({ pandoc.Plain(item[1]) }, state, { bullet_depth = 0 })
+
+    local def_blocks = pandoc.List:new()
+    for _, definition in ipairs(item[2] or {}) do
+      for _, b in ipairs(definition) do
+        def_blocks:insert(b)
+      end
+    end
+    local converted_def = convert(def_blocks, state, { bullet_depth = 0 })
+    if #converted_def == 0 then
+      converted_def = pandoc.List:new({ pandoc.Para({}) })
+    end
+
+    return pandoc.Row({
+      pandoc.Cell(term_blocks),
+      pandoc.Cell(converted_def),
+    })
+  end
+
+  local head_rows = pandoc.List:new()
+  local body_rows = pandoc.List:new()
+  for i, item in ipairs(dl.content) do
+    if i == 1 then
+      head_rows:insert(make_row(item))
+    else
+      body_rows:insert(make_row(item))
+    end
+  end
+
+  local tbody = { attr = pandoc.Attr(), row_head_columns = 0, head = {}, body = body_rows }
+  return pandoc.Table(
+    { long = pandoc.Blocks({}) },
+    {
+      { pandoc.AlignDefault, 0.25 },
+      { pandoc.AlignDefault, 0.75 },
+    },
+    pandoc.TableHead(head_rows),
+    { tbody },
+    pandoc.TableFoot({}),
+    pandoc.Attr()
+  )
+end
+
 local function convert_blocks(blocks, state, ctx)
   local out = pandoc.List:new()
 
@@ -468,6 +542,14 @@ local function convert_blocks(blocks, state, ctx)
             out:insert(pandoc.Plain(fallback))
           end
         end
+      end
+
+    elseif block.t == "Div" and is_definitions_div(block) then
+      local tbl = definitions_div_to_table(block, state, convert_blocks)
+      if tbl then
+        out:insert(tbl)
+      else
+        append_blocks(out, convert_blocks(block.content, state, { bullet_depth = 0 }))
       end
 
     elseif block.t == "Div" then
@@ -539,13 +621,11 @@ local function convert_blocks(blocks, state, ctx)
       end
       local foot_rows = rebuild_table_rows(block.foot and block.foot.rows)
 
+      -- Column widths stay as authored. The 25/75 split belongs to
+      -- definition tables only, which arrive as "::: Definitions" divs;
+      -- forcing it on every two-column table skewed layout tables such as
+      -- the side-by-side signature block, which needs an even split.
       local colspecs = block.colspecs
-      if #colspecs == 2 then
-        colspecs = {
-          { pandoc.AlignDefault, 0.25 },
-          { pandoc.AlignDefault, 0.75 },
-        }
-      end
 
       local tbody = { attr = pandoc.Attr(), row_head_columns = 0, head = {}, body = body_rows }
       out:insert(pandoc.Table(

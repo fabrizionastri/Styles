@@ -456,6 +456,49 @@ first row typically has light grey shading (#F2F2F2) and bold text. Table cell
 text inherits Normal formatting (Open Sans 10 pt, justified). Tables use fixed
 column widths.
 
+### 10.1 Definition tables
+
+A two-column term/definition table is written as a definition list inside a
+`::: Definitions` block, not as a grid table. The first item is the header row;
+the term column takes 25% of the width and the definition column 75%.
+
+```markdown
+::: Definitions
+
+**Defined Term / Key Item**
+:   **Definition / Specific terms and conditions**
+
+**Currency**
+:   ‹ Currency ›
+
+**The Receivables**
+:   The Receivables are listed individually in the Receivables Schedule.
+
+    ::: Comments
+    {? NOTE: State the aggregate figures below. ?}
+    :::
+
+    Aggregate Nominal Value, by Priority:
+
+    - Firm: ‹ amount › ‹ currency ›
+    - Credit: ‹ amount › ‹ currency ›
+
+    Number of Receivables: ‹ number ›.
+
+:::
+```
+
+Everything indented by four spaces under a `:` marker belongs to that
+definition, and each blank-line-separated block becomes its own Word paragraph
+with its own style. Use this form whenever a cell holds more than one
+paragraph: in a grid table a fenced div or a list only starts a new block after
+a blank line, so multi-block cells collapse into a single paragraph and the
+`:::` markers leak through as literal text.
+
+`d2m` produces this form automatically for any two-column table whose first
+column holds a single non-empty paragraph in every row. Layout tables such as
+the side-by-side signature block keep the grid form and an even column split.
+
 ---
 
 ## 11. Footer

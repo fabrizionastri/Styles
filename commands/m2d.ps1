@@ -160,13 +160,34 @@ function Convert-OffsetPrefixesToStyleSuffix {
 
   $inFence = $false
   $fenceChar = ""
+  # Inside a "::: Definitions" block the indentation is structural: it binds
+  # each block to its definition-list item. Rewriting indented lines there
+  # would dedent them out of the definition, so pass the block through as-is.
+  $inDefinitions = $false
 
   for ($i = 0; $i -lt $lines.Length; $i++) {
     $line = $lines[$i]
 
+    if (-not $inFence) {
+      if ($inDefinitions) {
+        # Everything belonging to a definition is indented, so the only
+        # unindented closing fence is the one that ends the block.
+        if ($line -match '^:::+\s*$') {
+          $inDefinitions = $false
+        }
+        $outLines.Add($line)
+        continue
+      }
+      if ($line -match '^:::+\s*\{?\.?Definitions\b') {
+        $inDefinitions = $true
+        $outLines.Add($line)
+        continue
+      }
+    }
+
     if ($line -match '^\s*(```+|~~~+)') {
-      $token = $Matches[1]
-      $char = $token.Substring(0, 1)
+      $Token = $Matches[1]
+      $char = $Token.Substring(0, 1)
       if (-not $inFence) {
         $inFence = $true
         $fenceChar = $char
