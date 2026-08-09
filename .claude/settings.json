@@ -16,7 +16,8 @@
       "Bash(mkdir -p /tmp/m2h_batch_test)",
       "Bash(cp \"/c/Users/fabri/FlexUp/FlexUp - Documents/Legal/Styles/example/example.md\" /tmp/m2h_batch_test/)",
       "Read(//c/Users/fabri/AppData/Local/Temp/m2h_batch_test/**)",
-      "Bash(rm -rf /tmp/m2h_batch_test)"
+      "Bash(rm -rf /tmp/m2h_batch_test)",
+      "PowerShell(. .\\\\commands\\\\commands.ps1)"
     ],
     "additionalDirectories": [
       "\\tmp"
