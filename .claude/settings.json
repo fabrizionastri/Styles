@@ -12,7 +12,14 @@
       "Bash(pandoc -f \"markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart\" -t native t3_back_1.md)",
       "Bash(pandoc -f \"markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart\" -t native fixed.md)",
       "PowerShell($sp = \"C:\\\\Users\\\\fabri\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-fabri-FlexUp-FlexUp---Documents-Legal-Styles\\\\d3c04010-86c4-4575-a60e-662b4459103f\\\\scratchpad\"; & \"c:\\\\Users\\\\fabri\\\\FlexUp\\\\FlexUp - Documents\\\\Legal\\\\Styles\\\\commands\\\\m2d.ps1\" \"$sp\\\\fixed.md\" \"$sp\\\\fixed.docx\")",
-      "Bash(pandoc -f \"markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart\" -t native --lua-filter=\"c:/Users/fabri/FlexUp/FlexUp - Documents/Legal/Styles/filters/compact_to_docx.lua\" fixed.md -o ast3.txt)"
+      "Bash(pandoc -f \"markdown+fancy_lists+lists_without_preceding_blankline+fenced_divs-smart\" -t native --lua-filter=\"c:/Users/fabri/FlexUp/FlexUp - Documents/Legal/Styles/filters/compact_to_docx.lua\" fixed.md -o ast3.txt)",
+      "Bash(mkdir -p /tmp/m2h_batch_test)",
+      "Bash(cp \"/c/Users/fabri/FlexUp/FlexUp - Documents/Legal/Styles/example/example.md\" /tmp/m2h_batch_test/)",
+      "Read(//c/Users/fabri/AppData/Local/Temp/m2h_batch_test/**)",
+      "Bash(rm -rf /tmp/m2h_batch_test)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

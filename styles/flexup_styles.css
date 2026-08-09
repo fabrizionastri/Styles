@@ -14,7 +14,6 @@
   --fx-font-size-main: 10pt;
 
   --fx-color-text: #111;
-  --fx-color-background: #f5e3d2;
   --fx-color-link: #0563c1;
   --fx-color-comments: #00b050;
   --fx-color-table-head: #e9bf8e;
@@ -31,6 +30,7 @@ html,
 body {
   margin: 0;
   padding: 10px;
+  background: transparent;
 }
 
 body {
@@ -38,7 +38,8 @@ body {
   font-size: var(--fx-font-size-main);
   line-height: 1.25;
   color: var(--fx-color-text);
-  background: var(--fx-color-background);
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 a {
@@ -218,6 +219,61 @@ td {
 thead th {
   background: var(--fx-color-table-head);
   font-weight: 700;
+}
+
+/* Standalone indented bullets that aren't part of a continuous nested
+   list (surrounded by blank lines) come through as .List/.List-2/.List-3
+   divs instead of real <ul> nesting -- give them the same look. */
+.List > p,
+.List-2 > p,
+.List-3 > p {
+  position: relative;
+  text-align: justify;
+  margin-top: 0;
+  margin-bottom: var(--fx-space-xs);
+  padding-left: 0.38cm;
+}
+
+.List > p::before,
+.List-2 > p::before,
+.List-3 > p::before {
+  content: "\2212";
+  position: absolute;
+  left: 0;
+}
+
+.List {
+  margin-left: 0.5cm;
+}
+
+.List-2 {
+  margin-left: 1cm;
+}
+
+.List-3 {
+  margin-left: 1.5cm;
+}
+
+/* Appendix index blocks (::: index-1 / index-2 / index-3) */
+.index-1,
+.index-2,
+.index-3 {
+  font-size: 10pt;
+}
+
+.index-1 > p,
+.index-2 > p,
+.index-3 > p {
+  margin-top: 0;
+  margin-bottom: var(--fx-space-xs);
+}
+
+.index-2 {
+  margin-left: 0.5cm;
+}
+
+.index-3 {
+  margin-left: 1cm;
 }
 
 /* Footnotes/endnotes rendering in HTML */

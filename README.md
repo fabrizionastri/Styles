@@ -80,6 +80,12 @@ m2d "My Contract.md"
 ```
 This creates `My Contract.docx` in the same folder.
 
+**Convert Markdown to HTML:**
+```
+m2h "My Contract.md"
+```
+This creates `My Contract.html` in the same folder — a single self-contained file with the FlexUp styling embedded, ready to open in a browser or attach in an email.
+
 **Convert a legacy Word document to the new styles:**
 ```
 ld2d "Old Contract.docx"
@@ -100,12 +106,20 @@ d2m-all "C:\Contracts\Templates"
 ```
 Same as above, but converts every `.docx` file to `.md`.
 
+**Convert all Markdown files in a folder to HTML:**
+```
+m2h-all
+m2h-all "C:\Contracts\Templates"
+```
+Same idea, but converts every `.md` file to `.html`.
+
 If an output file already exists, the commands add a counter to avoid overwriting: `My Contract_1.docx`, `My Contract_2.docx`, etc.
 
 You can also specify where single-file commands should write their output:
 ```
 d2m "My Contract.docx" "output.md"
 m2d "My Contract.md" "output.docx"
+m2h "My Contract.md" "output.html"
 ld2d "Old Contract.docx" "New Contract"
 d2m "My Contract.docx" "."
 d2m "My Contract.docx" ".\plop"
@@ -259,8 +273,10 @@ Everything below is detailed technical documentation for developers and advanced
 | ------------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------- |
 | `commands/d2m.ps1`                   | DOCX to Markdown                                | `filters/docx_to_compact.lua`                                       |
 | `commands/m2d.ps1`                   | Markdown to DOCX                                | `filters/compact_to_docx.lua`, `styles/flexup_template.docx`        |
+| `commands/m2h.ps1`                   | Markdown to HTML (single self-contained file)   | `filters/compact_to_html.lua`, `styles/flexup_styles.css`           |
 | `commands/ld2d.ps1`                  | Legacy DOCX to remapped DOCX                    | `commands/remap_legacy_contracts.py`, `styles/flexup_template.docx` |
 | `commands/m2d-all.ps1`               | Batch Markdown to DOCX (all files in a folder)  | `m2d`                                                               |
+| `commands/m2h-all.ps1`               | Batch Markdown to HTML (all files in a folder)  | `m2h`                                                               |
 | `commands/d2m-all.ps1`               | Batch DOCX to Markdown (all files in a folder)  | `d2m`                                                               |
 | `commands/commands.ps1`              | Loads all commands as PowerShell functions      | --                                                                  |
 | `commands/install_commands.ps1`      | Adds commands loader to your PowerShell profile | --                                                                  |
@@ -283,6 +299,12 @@ powershell -ExecutionPolicy Bypass -File .\commands\m2d.ps1 "SaaS contract.md"
 powershell -ExecutionPolicy Bypass -File .\commands\m2d.ps1 "SaaS contract.md" "output.docx"
 ```
 
+**Markdown to HTML:**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\commands\m2h.ps1 "SaaS contract.md"
+powershell -ExecutionPolicy Bypass -File .\commands\m2h.ps1 "SaaS contract.md" "output.html"
+```
+
 **Legacy DOCX to remapped DOCX:**
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\commands\ld2d.ps1 "legacy.docx"
@@ -303,11 +325,17 @@ powershell -ExecutionPolicy Bypass -File .\commands\d2m-all.ps1
 powershell -ExecutionPolicy Bypass -File .\commands\d2m-all.ps1 "C:\Contracts\Templates"
 ```
 
-Both batch commands process only the top-level folder (no recursion into subfolders). If an output file already exists, a counter is appended to the filename (e.g. `contract_1.docx`) to avoid overwriting.
+**Convert all Markdown files in a folder to HTML:**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\commands\m2h-all.ps1
+powershell -ExecutionPolicy Bypass -File .\commands\m2h-all.ps1 "C:\Contracts\Templates"
+```
+
+All batch commands process only the top-level folder (no recursion into subfolders). If an output file already exists, a counter is appended to the filename (e.g. `contract_1.docx`) to avoid overwriting.
 
 ## Output path behaviour
 
-For single-file commands (`d2m`, `m2d`, `ld2d`, `dmd`, `mdm`):
+For single-file commands (`d2m`, `m2d`, `m2h`, `ld2d`, `dmd`, `mdm`):
 
 - with no second argument, the output is created next to the input file
 - with a second argument, relative output paths are resolved from the current PowerShell folder
@@ -316,7 +344,7 @@ For single-file commands (`d2m`, `m2d`, `ld2d`, `dmd`, `mdm`):
 - an existing folder path, `.` / `..`, or a path ending in a slash is treated as an output folder
 - absolute output paths are used as provided
 
-Batch commands (`d2m-all`, `m2d-all`) still create each output file alongside its source file.
+Batch commands (`d2m-all`, `m2d-all`, `m2h-all`) still create each output file alongside its source file.
 
 ## Extension inference
 
@@ -326,9 +354,11 @@ All commands automatically add file extensions when omitted:
 | --------- | ------------- | ---------------- |
 | `d2m`     | `.docx`       | `.md`            |
 | `m2d`     | `.md`         | `.docx`          |
+| `m2h`     | `.md`         | `.html`          |
 | `ld2d`    | `.docx`       | `_remapped.docx` |
 | `d2m-all` | all `.docx`   | `.md`            |
 | `m2d-all` | all `.md`     | `.docx`          |
+| `m2h-all` | all `.md`     | `.html`          |
 
 Examples:
 - `d2m "contract"` reads `contract.docx`, writes `contract.md`
@@ -372,6 +402,8 @@ This requires Python 3.11+ and the `python-docx` package (managed via `pyproject
 ## Reference document
 
 The file `styles/flexup_template.docx` is the Word reference template used by `m2d` and `ld2d` to produce correctly styled output. Keep this file aligned with your target Word style definitions. See the [style guide](styles/style_guide.md) and [style matrix](styles/style_matrix.md) for full style specifications.
+
+`m2h` uses `styles/flexup_styles.css` instead -- the same Section/Article/Appendix numbering scheme, reimplemented as CSS counters targeting the classes that `filters/compact_to_html.lua` assigns.
 
 ## Related documentation
 

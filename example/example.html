@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10.1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>example</title>
+  <style>
+
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid #1a1a1a;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style>
+
+:root {
+--fx-font-main: "Open Sans", "Segoe UI", Arial, sans-serif;
+--fx-font-size-main: 10pt;
+--fx-color-text: #111;
+--fx-color-background: #f5e3d2;
+--fx-color-link: #0563c1;
+--fx-color-comments: #00b050;
+--fx-color-table-head: #e9bf8e;
+--fx-color-border: #000;
+--fx-space-xs: 3pt;
+--fx-space-sm: 6pt;
+--fx-space-md: 12pt;
+--fx-space-lg: 18pt;
+--fx-space-xl: 24pt;
+}
+html,
+body {
+margin: 0;
+padding: 10px;
+}
+body {
+font-family: var(--fx-font-main);
+font-size: var(--fx-font-size-main);
+line-height: 1.25;
+color: var(--fx-color-text);
+background: var(--fx-color-background);
+}
+a {
+color: var(--fx-color-link);
+text-decoration: underline;
+}
+
+p {
+margin-top: var(--fx-space-sm);
+margin-bottom: var(--fx-space-xs);
+text-align: justify;
+}
+
+h1 {
+font-size: 14pt;
+font-weight: 700;
+text-align: center;
+border-bottom: 1px solid var(--fx-color-border);
+margin-top: 0;
+margin-bottom: var(--fx-space-md);
+padding-bottom: 2pt;
+}
+h2 {
+font-size: 12pt;
+font-weight: 700;
+text-decoration: underline;
+text-align: left;
+margin-top: var(--fx-space-xl);
+margin-bottom: var(--fx-space-sm);
+}
+h3 {
+font-size: 11pt;
+font-weight: 700;
+text-align: left;
+margin-top: var(--fx-space-lg);
+margin-bottom: var(--fx-space-sm);
+}
+h4 {
+font-size: 10pt;
+font-weight: 400;
+text-decoration: underline;
+text-align: left;
+margin-top: var(--fx-space-md);
+margin-bottom: var(--fx-space-sm);
+}
+
+p.Comments,
+div.Comments,
+.Comments,
+p.comments,
+div.comments,
+.comments {
+font-style: italic;
+color: var(--fx-color-comments);
+text-align: left;
+margin-top: var(--fx-space-md);
+margin-bottom: var(--fx-space-md);
+}
+p.Comments,
+div.Comments > p,
+div.Comments li,
+.Comments > p,
+.Comments li,
+p.comments,
+div.comments > p,
+div.comments li,
+.comments > p,
+.comments li {
+font-style: italic;
+color: var(--fx-color-comments);
+}
+p.Published,
+p.PublishedOn,
+div.Published,
+div.PublishedOn,
+.Published,
+.PublishedOn,
+p.published,
+p.publishedon,
+div.published,
+div.publishedon,
+.published,
+.publishedon {
+font-style: italic;
+text-align: right;
+margin-top: var(--fx-space-md);
+margin-bottom: var(--fx-space-md);
+}
+div.Published > p,
+div.PublishedOn > p,
+.Published > p,
+.PublishedOn > p,
+div.published > p,
+div.publishedon > p,
+.published > p,
+.publishedon > p {
+text-align: right;
+}
+p.Offset,
+.Offset > p {
+margin-top: var(--fx-space-sm);
+margin-bottom: var(--fx-space-sm);
+margin-left: 1cm;
+}
+
+ul,
+ul ul,
+ul ul ul {
+list-style: none;
+margin-bottom: var(--fx-space-sm);
+padding-left: 0;
+}
+ul {
+margin-top: var(--fx-space-sm);
+margin-left: 0.5cm;
+}
+ul ul {
+margin-top: var(--fx-space-xs);
+margin-left: 0.5cm;
+}
+ul ul ul {
+margin-top: var(--fx-space-xs);
+margin-left: 0.5cm;
+}
+li {
+position: relative;
+text-align: justify;
+margin-top: 0;
+margin-bottom: var(--fx-space-xs);
+padding-left: 0.38cm;
+}
+ul ul > li,
+ul ul ul > li {
+padding-left: 0.5cm;
+}
+li::before {
+content: "\2212";
+position: absolute;
+left: 0;
+}
+
+table {
+border-collapse: collapse;
+width: 100%;
+table-layout: auto;
+margin-top: var(--fx-space-sm);
+margin-bottom: var(--fx-space-sm);
+}
+th,
+td {
+border: 1px solid var(--fx-color-border);
+padding: 4pt 6pt;
+font-size: 10pt;
+text-align: justify;
+vertical-align: top;
+}
+thead th {
+background: var(--fx-color-table-head);
+font-weight: 700;
+}
+/* Standalone indented bullets that aren't part of a continuous nested
+list (surrounded by blank lines) come through as .List/.List-2/.List-3
+divs instead of real <ul> nesting -- give them the same look. */
+  .List > p,
+  .List-2 > p,
+  .List-3 > p {
+    position: relative;
+    text-align: justify;
+    margin-top: 0;
+    margin-bottom: var(--fx-space-xs);
+    padding-left: 0.38cm;
+  }
+
+  .List > p::before,
+  .List-2 > p::before,
+  .List-3 > p::before {
+    content: "\2212";
+    position: absolute;
+    left: 0;
+  }
+
+  .List {
+    margin-left: 0.5cm;
+  }
+
+  .List-2 {
+    margin-left: 1cm;
+  }
+
+  .List-3 {
+    margin-left: 1.5cm;
+  }
+
+  /* Appendix index blocks (::: index-1 / index-2 / index-3) */
+  .index-1,
+  .index-2,
+  .index-3 {
+    font-size: 10pt;
+  }
+
+  .index-1 > p,
+  .index-2 > p,
+  .index-3 > p {
+    margin-top: 0;
+    margin-bottom: var(--fx-space-xs);
+  }
+
+  .index-2 {
+    margin-left: 0.5cm;
+  }
+
+  .index-3 {
+    margin-left: 1cm;
+  }
+
+  /* Footnotes/endnotes rendering in HTML */
+  .footnotes {
+    font-size: 8pt;
+  }
+
+  .footnotes ol li p {
+    margin-top: 0;
+    margin-bottom: 3pt;
+  }
+
+  /* ---------------------------
+     Automatic numbering system
+     --------------------------- */
+
+  body {
+    counter-reset:
+      section
+      article1
+      article2
+      article3
+      article4
+      appendix1
+      appendix2
+      appendix3
+      appendix4
+      appendix5;
+  }
+
+  /* Common numbering layout */
+  .Section,
+  .Article-1,
+  .Article-2,
+  .Article-3,
+  .Article-4,
+  .Appendix-1,
+  .Appendix-2,
+  .Appendix-3,
+  .Appendix-4,
+  .Appendix-5,
+  p.Section,
+  p.Article-1,
+  p.Article-2,
+  p.Article-3,
+  p.Article-4,
+  p.Appendix-1,
+  p.Appendix-2,
+  p.Appendix-3,
+  p.Appendix-4,
+  p.Appendix-5 {
+    position: relative;
+  }
+
+  /* Main body */
+  .Section,
+  p.Section {
+    font-size: 12pt;
+    font-weight: 700;
+    text-decoration: underline;
+    text-align: left;
+    margin-top: var(--fx-space-xl);
+    margin-bottom: var(--fx-space-sm);
+    counter-increment: section;
+    counter-reset: article1 article2 article3 article4;
+  }
+
+  .Section::before,
+  p.Section::before {
+    content: "Section " counter(section, upper-roman) ". ";
+  }
+
+  .Article-1,
+  p.Article-1 {
+    font-size: 11pt;
+    font-weight: 700;
+    text-align: left;
+    margin-top: var(--fx-space-lg);
+    margin-bottom: var(--fx-space-sm);
+    counter-increment: article1;
+    counter-reset: article2 article3 article4;
+  }
+
+  .Article-1::before,
+  p.Article-1::before {
+    content: "Article " counter(article1) ". ";
+  }
+
+  .Article-2,
+  p.Article-2 {
+    text-align: justify;
+    margin-top: var(--fx-space-sm);
+    margin-bottom: var(--fx-space-sm);
+    padding-left: 0.75cm;
+    text-indent: -0.75cm;
+    counter-increment: article2;
+    counter-reset: article3 article4;
+  }
+
+  .Article-2::before,
+  p.Article-2::before {
+    content: counter(article1) "." counter(article2) ". ";
+  }
+
+  .Article-3,
+  p.Article-3 {
+    text-align: justify;
+    margin-top: var(--fx-space-xs);
+    margin-bottom: var(--fx-space-xs);
+    padding-left: 1.5cm;
+    text-indent: -0.5cm;
+    counter-increment: article3;
+    counter-reset: article4;
+  }
+
+  .Article-3::before,
+  p.Article-3::before {
+    content: counter(article3, lower-alpha) ") ";
+  }
+
+  .Article-4,
+  p.Article-4 {
+    text-align: justify;
+    margin-top: var(--fx-space-xs);
+    margin-bottom: var(--fx-space-xs);
+    padding-left: 2.25cm;
+    text-indent: -0.5cm;
+    counter-increment: article4;
+  }
+
+  .Article-4::before,
+  p.Article-4::before {
+    content: counter(article4, lower-roman) ". ";
+  }
+
+  /* Appendices (separate numbering branch) */
+  .Appendix-1,
+  p.Appendix-1 {
+    font-size: 12pt;
+    font-weight: 700;
+    text-align: center;
+    border-bottom: 1px solid var(--fx-color-border);
+    margin-top: 0;
+    margin-bottom: var(--fx-space-md);
+    padding-bottom: 2pt;
+    counter-increment: appendix1;
+    counter-reset: appendix2 appendix3 appendix4 appendix5;
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .Appendix-1::before,
+  p.Appendix-1::before {
+    content: "Appendix " counter(appendix1) ". ";
+  }
+
+  .Appendix-2,
+  p.Appendix-2 {
+    font-size: 12pt;
+    font-weight: 700;
+    text-decoration: underline;
+    text-align: left;
+    margin-top: var(--fx-space-xl);
+    margin-bottom: var(--fx-space-sm);
+    counter-increment: appendix2;
+    counter-reset: appendix3 appendix4 appendix5;
+  }
+
+  .Appendix-2::before,
+  p.Appendix-2::before {
+    content: "Section " counter(appendix2, upper-alpha) ". ";
+  }
+
+  .Appendix-3,
+  p.Appendix-3 {
+    font-size: 10pt;
+    font-weight: 400;
+    text-align: justify;
+    margin-top: var(--fx-space-md);
+    margin-bottom: var(--fx-space-sm);
+    padding-left: 0.75cm;
+    text-indent: -0.75cm;
+    counter-increment: appendix3;
+    counter-reset: appendix4 appendix5;
+  }
+
+  .Appendix-3::before,
+  p.Appendix-3::before {
+    content: counter(appendix3) ". ";
+  }
+
+  .Appendix-4,
+  p.Appendix-4 {
+    text-align: justify;
+    margin-top: var(--fx-space-sm);
+    margin-bottom: var(--fx-space-sm);
+    padding-left: 1.5cm;
+    text-indent: -0.5cm;
+    counter-increment: appendix4;
+    counter-reset: appendix5;
+  }
+
+  .Appendix-4::before,
+  p.Appendix-4::before {
+    content: counter(appendix4, lower-alpha) ") ";
+  }
+
+  .Appendix-5,
+  p.Appendix-5 {
+    text-align: justify;
+    margin-top: var(--fx-space-xs);
+    margin-bottom: var(--fx-space-xs);
+    padding-left: 2.25cm;
+    text-indent: -0.5cm;
+    counter-increment: appendix5;
+  }
+
+  .Appendix-5::before,
+  p.Appendix-5::before {
+    content: counter(appendix5, lower-roman) ". ";
+  }
+
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">example</h1>
+</header>
+<h1 id="flexup-founders-agreement-special-conditions-founders-sc">FlexUp
+Founders Agreement – Special Conditions (Founders-SC)</h1>
+<div class="Published">
+<p>Based on a template first drafted by Claude on 18<sup>th</sup> April
+2026</p>
+</div>
+<div class="Comments">
+<p>{? Guidelines on using this template: This template uses the
+following types of text: – <strong>Standard text</strong> (black) –
+Fixed legal wording that is part of the Agreement. Do not modify unless
+explicitly permitted. – <strong>Data fields</strong> (blue) – Parameters
+filled automatically by the FlexUp app ({ { ... } }) or manually (‹ ...
+›). When editing manually, replace any placeholder in angle brackets ‹
+... › with the appropriate value. – <strong>Options</strong> (green) –
+Conditional sections processed by the FlexUp app ({ % ... % }) or
+manually ([ ... ]). When editing manually, read the condition and keep
+or delete the section as appropriate. – <strong>Guidance</strong> (grey)
+{? NOTE: ... ?} – Drafting instructions and illustrations for the
+drafter. Not part of the Agreement. Delete all guidance text before
+finalising the document. If you wish to modify any standard text, you
+must: – Explicitly state that changes have been made in the
+introduction. – Mark any added text in underlined italics. – Mark any
+deleted text with strikethrough. Failure to declare changes to the
+template or standard text as indicated above constitutes a violation of
+the FlexUp Licence and a breach of this Agreement. – After completing
+your edits, remove all guidance, option blocks, and brackets to ensure
+the document is clean and easy to read. ?}</p>
+<p>{? NOTE: This Agreement may be signed by two or more Founders
+(multi-founder case) or by a single Founder (solo case). In the solo
+case, the Agreement constitutes a unilateral commitment by the Founder.
+Before incorporation into an Incubation Agreement or Grouping Agreement,
+it binds only the signing Founder or Founders and creates no rights or
+obligations for any third party. Once incorporated, third-party
+enforcement rights apply only as provided in the Founders-GC and the
+incorporating agreement. Adjust the opening sentence and signatures
+accordingly. ?}</p>
+</div>
+<p>This FlexUp Founders Agreement (&quot;<strong>Agreement</strong>&quot;) is
+entered into by and between the Founders identified in <a href="#appendix-1">Appendix 1</a> below, collectively referred to as the
+&quot;<strong>Founders</strong>&quot; and individually as a
+&quot;<strong>Founder</strong>&quot;.</p>
+<p>This template is provided by FlexUp under the terms of the FlexUp
+Licence, which can be found on the FlexUp website (<a href="http://www.flexup.org">www.flexup.org</a>).</p>
+<div id="article-1" class="Article-1">
+<p>Composition and Interpretation</p>
+</div>
+<div class="Article-2">
+<p>The Agreement is composed of the following documents, in descending
+order of priority:</p>
+</div>
+<div class="Article-3">
+<p><strong>Founders-SC</strong>, the present document;</p>
+</div>
+<div class="Article-3">
+<p><strong>Founders-GC</strong>;</p>
+</div>
+<div class="Article-3">
+<p><strong>NDA-GC</strong>; and</p>
+</div>
+<div class="Article-3">
+<p><strong>FlexUp-GC</strong>.</p>
+</div>
+<div id="article-2" class="Article-1">
+<p>Scope and Obligations</p>
+</div>
+<div class="Article-2">
+<p>This Founders-SC defines the specific terms under which the Founders
+commit to pursue the Project together, and governs their inter-se
+relationship in accordance with the Founders-GC.</p>
+</div>
+<div id="article-3" class="Article-1">
+<p>Definitions and specific terms and conditions</p>
+</div>
+<p>Capitalised terms within this Agreement are defined terms, whose
+definitions are given in the table below or, if not here, elsewhere in
+the documents composing the Agreement or in the FlexUp Glossary
+(available on <a href="http://www.flexup.org/glossary">www.flexup.org/glossary</a>).</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 75%" />
+</colgroup>
+<thead>
+<tr>
+<th><strong>Defined Term / Key Item</strong></th>
+<th><strong>Definition / Specific terms and conditions</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Contract Label</strong></td>
+<td>{{ contract.text_label or &#39;‹ Project name › – Founders Agreement • ‹
+Date ›&#39; }}</td>
+</tr>
+<tr>
+<td><strong>Founders</strong></td>
+<td>The persons listed in <a href="#appendix-1">Appendix 1</a> –
+Register of Founders.</td>
+</tr>
+<tr>
+<td><strong>Founders&#39; Representative</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Designate one Founder as Founders&#39; Representative. This
+person collects votes, issues notices, and co-signs the Charter-SC as
+attestingwitness. They may also be granted a power of attorney in
+Appendix 3. ?}</p>
+</div>
+<div class="Comments">
+<p>{{ founders.representative.name or &#39;‹ Full name of Founders&#39;
+Representative ›&#39; }}</p>
+</div></td>
+</tr>
+<tr>
+<td><strong>Project</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Describe the common initiative the Founders are
+pursuing.This description does not need to be exhaustive – it will be
+detailedfurther in the Charter-SC when the Holding Structure is
+implemented. ?}</p>
+</div>
+<div class="Comments">
+<p>‹ Description of the project: sector, activity, and any other
+relevant details. ›</p>
+</div></td>
+</tr>
+<tr>
+<td><strong>Intended Structure</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Select one of the options below. ?}</p>
+</div>
+<p>[ Grouping ]</p>
+<p>The Founders intend to implement a FlexUp Grouping Agreement. The
+Grouping is expected to be set up under: {{ grouping.target_name or &#39;‹
+Target Grouping name ›&#39; }}. Each Founder must be listed as a Constituent
+in the Grouping-SC, and each Constituent must be listed as a Founder in
+this Founders-SC. The Grouping requires a Charter-SC and use of the
+FlexUp App, even if the Founders do not use flexible remuneration or
+flexible equity.</p>
+<p>[ Subaccount ]</p>
+<p>The Founders intend for the Project to be held as a Subaccount under
+the Charter and in the FlexUp App. The Holder of the Subaccount will
+be:</p>
+<p>{{ incubator.name or &#39;‹ Name of Holder / Incubator, either one of the
+Founders or an external Incubator ›&#39; }}, acting as Incubator under an
+Incubation Agreement.</p>
+<p>The Subaccount requires a Charter-SC and use of the FlexUp App, even
+if the Founders do not use flexible remuneration or flexible equity.</p>
+<p>[ Postponed ]</p>
+<p>The decision between a Grouping and a Subaccount is deferred. It
+shall be taken by the Founders&#39; Assembly by a Simple Majority when the
+Founders are ready to proceed, in accordance with the
+Founders-GC.</p></td>
+</tr>
+<tr>
+<td><strong>Remuneration and Equity Framework</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose the remuneration and equity framework. A Grouping
+orSubaccount still requires a Charter-SC and use of the FlexUp App,
+evenwhere the Founders do not use flexible remuneration or flexible
+equity. ?}</p>
+</div>
+<p>[ Flexible remuneration and equity ]</p>
+<p>The Project will use flexible remuneration and equity under the
+Charter.</p>
+<p>[ Classic remuneration and equity ]</p>
+<p>The Project will use the Charter and the FlexUp App where required
+for</p>
+<p>the selected Holding Structure, but will not use flexible
+remuneration or flexible equity. The Founders&#39; economic rights, exit
+treatment, and governance rights shall be governed by this Founders-SC
+and, once applicable, by the Charter-SC, corporate, Subaccount, or
+holding documents adopted for the Project.</p>
+<p>[ Custom ]</p>
+<p>‹ Describe which parts use flexible remuneration or flexible equity,
+and which parts use classic or corporate arrangements ›.</p></td>
+</tr>
+<tr>
+<td><strong>Voting Weights</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Define voting weights for the Founders&#39; Assembly during
+thePre-Charter Phase. The default is one vote per Founder. If
+customweights are agreed, list them here and in Appendix 1. ?}</p>
+</div>
+<p>[ Default – one vote per Founder ]</p>
+<p>Each Founder holds one (1) vote in the Founders&#39; Assembly during the
+Pre-Charter Phase.</p>
+<p>[ Custom ]</p>
+<p>The voting weights of the Founders during the Pre-Charter Phase are
+as specified in <a href="#appendix-1">Appendix 1</a> – Register of
+Founders.</p></td>
+</tr>
+<tr>
+<td><strong>Currency</strong></td>
+<td>{{ contract.currency or &#39;‹ Currency ›&#39; }}.</td>
+</tr>
+<tr>
+<td><strong>Jurisdiction</strong></td>
+<td>{{ contract.jurisdiction or &#39;‹ City, Country ›&#39; }}.</td>
+</tr>
+<tr>
+<td><strong>Governing Law</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose one governing law. French law applies by default
+underthe FlexUp-GC if no choice is made. ?}</p>
+</div>
+<p>[ Default ]</p>
+<p>French law.</p>
+<p>[ Custom ]</p>
+<p>‹ Applicable law ›.</p></td>
+</tr>
+<tr>
+<td><strong>Effective Date</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose the effective date rule. ?}</p>
+</div>
+<p>[ Date of last signature ]</p>
+<p>The Agreement enters into effect on the date of the last
+signature.</p>
+<p>[ Specific date ]</p>
+<p>The Agreement enters into effect on {{ contract.effective_date or &#39;‹
+Date ›&#39; }}.</p></td>
+</tr>
+<tr>
+<td><strong>Exit Notice Period</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose an exit notice period. The Founders-GC default
+isthirty (30) days if no period is specified here. ?}</p>
+</div>
+<p>[ 30 days ]</p>
+<p>Thirty (30) days&#39; prior written notice to the Founders&#39;
+Representative.</p>
+<p>[ Custom ]</p>
+<p>‹ Duration › prior written notice to the Founders&#39;
+Representative.</p></td>
+</tr>
+<tr>
+<td><strong>Treatment of Rights on Exit</strong></td>
+<td><p>Upon voluntary exit or exclusion, the exiting Founder&#39;s Credits,
+Tokens, shares, contractual rights, and other rights shall be:</p>
+<div class="Comments">
+<p>{? NOTE: Chooseone treatment or write a custom one. ?}</p>
+</div>
+<p>[ Retained by exiting Founder ]</p>
+<p>retained by the exiting Founder, subject to the Charter.</p>
+<p>[ Buyback offer ]</p>
+<p>subject to a buyback offer by the remaining Founders at the Token
+Index price, within ninety (90) days of the exit date.</p>
+<p>[ Custom ]</p>
+<p>‹ Describe treatment ›.</p></td>
+</tr>
+<tr>
+<td><strong>Confidentiality</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Confidentiality applies by default under the NDA-GC. Select
+a custom option only if the Founders need a special scope, duration, or
+carve-out. ?}</p>
+</div>
+<p>[ Standard confidentiality ]</p>
+<p>Each Founder must protect Confidential Information during the
+Agreement and after exit or Cessation.</p>
+<p>[ Custom confidentiality ]</p>
+<p>‹ Describe any special confidentiality scope, authorised disclosures,
+duration, or carve-outs. ›</p></td>
+</tr>
+<tr>
+<td><strong>Non-Compete Post-Exit Duration</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose one non-compete option. The default is &quot;Not
+applicable&quot;. ?}</p>
+</div>
+<p>[ Not applicable ]</p>
+<p>No non-compete applies.</p>
+<p>[ Narrow ]</p>
+<p>For six (6) months after exit or Cessation, Founders must not
+directly compete with the Project&#39;s core business in its active
+markets.</p>
+<p>[ Enhanced ]</p>
+<p>For twelve (12) months after exit or Cessation, Founders must not
+materially compete with the Project&#39;s products, services, market
+segment, or business opportunity.</p>
+<p>[ Custom ]</p>
+<p>‹ Describe the restricted activities, territory, duration, and
+carve-outs. ›</p></td>
+</tr>
+<tr>
+<td><strong>Non-Circumvention</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose one non-circumvention option. The default is
+&quot;Standard&quot;. ?}</p>
+</div>
+<p>[ Light ]</p>
+<p>For twelve (12) months after exit or Cessation, Founders must not
+bypass the Project to take a specific opportunity, relationship, or
+Project IP identified through it.</p>
+<p>[ Standard ]</p>
+<p>For twenty-four (24) months after exit or Cessation, Founders must
+not divert or exploit Project opportunities, relationships, or Project
+IP outside the agreed Project framework.</p>
+<p>[ Enhanced ]</p>
+<p>For thirty-six (36) months after exit or Cessation, Founders must not
+bypass, restructure, divert, or help a third party capture Project
+opportunities, relationships, fundraising opportunities, or Project
+IP.</p>
+<p>[ Custom ]</p>
+<p>‹ Describe the restricted opportunities, relationships, duration, and
+carve-outs. ›</p></td>
+</tr>
+<tr>
+<td><strong>Personnel Non-Solicitation</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose one personnel non-solicitation option. The default is
+&quot;Standard&quot;. ?}</p>
+</div>
+<p>[ Not applicable ]</p>
+<p>No personnel non-solicitation applies.</p>
+<p>[ Standard ]</p>
+<p>For twelve (12) months after exit or Cessation, Founders must not
+directly solicit or try to hire restricted Project or Founder
+personnel.</p>
+<p>[ Enhanced ]</p>
+<p>For twenty-four (24) months after exit or Cessation, Founders must
+not directly or indirectly solicit, hire, retain, or encourage
+restricted Project or Founder personnel to leave.</p>
+<p>[ Custom ]</p>
+<p>‹ Describe the restricted persons, duration, and carve-outs.
+›</p></td>
+</tr>
+<tr>
+<td><strong>Client Non-Solicitation</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose one client non-solicitation option. The default is
+&quot;Not applicable&quot;. ?}</p>
+</div>
+<p>[ Not applicable ]</p>
+<p>No client non-solicitation applies.</p>
+<p>[ Standard ]For twelve (12) months after exit or Cessation, Founders
+must not directly solicit Project clients or prospects outside the
+Project or in direct competition with it.</p>
+<p>[ Enhanced ]</p>
+<p>For twenty-four (24) months after exit or Cessation, Founders must
+not directly or indirectly capture or help others capture Project
+clients, prospects, partners, investors, or commercial leads.</p>
+<p>[ Custom ]</p>
+<p>‹ Describe the restricted relationships, duration, and carve-outs.
+›</p></td>
+</tr>
+<tr>
+<td><strong>Confidentiality Post-Exit Duration</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose the confidentiality survival period. The Founders-GC
+default is five (5) years if no period is specified here. ?}</p>
+</div>
+<p>[ 5 years ]</p>
+<p>Confidentiality survives for five (5) years after exit or
+Cessation.</p>
+<p>[ Custom ]</p>
+<p>Confidentiality survives for ‹ Duration › after exit or
+Cessation.</p></td>
+</tr>
+<tr>
+<td><strong>Initial Contributions</strong></td>
+<td><div class="Comments">
+<p>{? NOTE: Choose whether past contributions made before this
+Agreementare formally recognised. ?}</p>
+</div>
+<p>[ No initial contributions ]</p>
+<p>No initial contributions are recognised.</p>
+<p>[ Initial contributions recognised ]</p>
+Past contributions are recognised as specified in <a href="#appendix-2">Appendix2</a> – Initial Contributions.</td>
+</tr>
+</tbody>
+</table>
+<div id="article-4" class="Article-1">
+<p>Exceptions</p>
+</div>
+<div class="Article-2">
+<p>The Exceptions set out in this Article
+(&quot;<strong>Exceptions</strong>&quot;) derogate from certain provisions of the
+Founders-GC. Each Exception shall clearly specify the corresponding
+Article of the Founders-GC from which it deviates.{% if not
+contract.exceptions %}</p>
+</div>
+<div class="Article-2">
+<p>There are no Exceptions to the provisions of the Founders-GC in this
+Founders-SC.{% else %}This Agreement contains the following Exceptions
+to the Founders-GC:</p>
+</div>
+<div class="Offset">
+<p>{{ contract.exceptions or &#39;‹ Contract exceptions ›&#39; }}{% endif %}</p>
+</div>
+<div id="article-5" class="Article-1">
+<p>Extensions</p>
+</div>
+<div class="Article-2">
+<p>The Extensions set out in this Article
+(&quot;<strong>Extensions</strong>&quot;) complete the stipulations of the
+Founders-GC, by providing additional specific conditions.{% if not
+contract.extensions %}</p>
+</div>
+<div class="Article-2">
+<p>There are no Extensions to the provisions of the Founders-GC in this
+Founders-SC.{% else %}This Agreement contains the following Extensions
+to the Founders-GC:</p>
+</div>
+<div class="Offset">
+<p>{{ contract.extensions or &#39;‹ Contract extensions ›&#39; }}{% endif %}</p>
+</div>
+<hr />
+<p>By signing this document, the Founders confirm they have received,
+reviewed, and understood all the documents that compose the Agreement,
+as defined above, which together form an inseparable whole, and agree
+without reservation to all terms and conditions described therein.</p>
+<p>This Founders-SC is based on the template published by FlexUp on the
+date specified at the top of this document.</p>
+<h4 id="list-of-appendices">List of Appendices</h4>
+<ul>
+<li>Appendix 1. Register of Founders</li>
+<li>Appendix 2. Initial Contributions (if applicable)</li>
+<li>Appendix 3. Founders&#39; Representative Mandate (if applicable)</li>
+</ul>
+<h3 id="signatures">Signatures</h3>
+<div class="Comments">
+<p>{? NOTE: Include one signature block per Founder. In the solo-Founder
+case, include only one block. ?}</p>
+</div>
+<table style="width:83%;">
+<colgroup>
+<col style="width: 41%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: left;"><h4 id="founder-1">Founder 1</h4></th>
+<th style="text-align: left;"><h4 id="founder-2">Founder 2</h4></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>‹ Full name ›</strong></td>
+<td style="text-align: left;"><strong>‹ Full name ›</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Date: ‹ Date of signature ›</td>
+<td style="text-align: left;">Date: ‹ Date of signature ›</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<table style="width:83%;">
+<colgroup>
+<col style="width: 41%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: left;"><h4 id="founder-3">Founder 3</h4></th>
+<th style="text-align: left;"><h4 id="founder-4">Founder 4</h4></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>‹ Full name ›</strong></td>
+<td style="text-align: left;"><strong>‹ Full name ›</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Date: ‹ Date of signature ›</td>
+<td style="text-align: left;">Date: ‹ Date of signature ›</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<div id="appendix-1" class="Appendix-1">
+<p>Register of Founders</p>
+</div>
+<div class="Comments">
+<p>{ NOTE: List each Founder with their identification details. This
+appendix is the authoritative register of all Founders. If custom voting
+weights apply, add a &quot;Voting Weight&quot; column. }</p>
+</div>
+<table style="width:93%;">
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 22%" />
+<col style="width: 30%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>#</strong></th>
+<th style="text-align: left;"><strong>Full Name</strong></th>
+<th style="text-align: left;"><strong>Role / Function</strong></th>
+<th><strong>Voting Weight</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">‹ Full name ›</td>
+<td style="text-align: left;">‹ Role ›</td>
+<td><div class="Comments">
+<p>‹ Nr of votes ›</p>
+</div></td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">‹ Full name ›</td>
+<td style="text-align: left;">‹ Role ›</td>
+<td><div class="Comments">
+<p>‹ Nr of votes ›</p>
+</div></td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">‹ Full name ›</td>
+<td style="text-align: left;">‹ Role ›</td>
+<td><div class="Comments">
+<p>‹ Nr of votes ›</p>
+</div></td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">‹ Full name ›</td>
+<td style="text-align: left;">‹ Role ›</td>
+<td><div class="Comments">
+<p>‹ Nr of votes ›</p>
+</div></td>
+</tr>
+</tbody>
+</table>
+<div id="appendix-2" class="Appendix-1">
+<p>Initial Contributions</p>
+</div>
+<div class="Comments">
+<p>{ NOTE: This appendix is optional. Include it only if the Founders
+wish to formally recognise contributions made before the signing of this
+Agreement. Delete this appendix if no initial contributions are to be
+recognised. }</p>
+</div>
+<p>The following past contributions are recognised by the Founders and
+shall be converted into initial Credits once the Charter-SC is signed
+for the Project:</p>
+<table style="width:97%;">
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 13%" />
+<col style="width: 33%" />
+<col style="width: 12%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>#</strong></th>
+<th style="text-align: left;"><strong>Founder</strong></th>
+<th style="text-align: left;"><strong>Description</strong></th>
+<th style="text-align: left;"><strong>Value</strong></th>
+<th><strong>Credit Type</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">‹ Name ›</td>
+<td style="text-align: left;">‹ Description of contribution ›</td>
+<td style="text-align: left;">‹ Amount ›</td>
+<td><div class="Comments">
+<p>‹ Standard / Redeemable ›</p>
+</div></td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">‹ Name ›</td>
+<td style="text-align: left;">‹ Description of contribution ›</td>
+<td style="text-align: left;">‹ Amount ›</td>
+<td><div class="Comments">
+<p>‹ Standard / Redeemable ›</p>
+</div></td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">‹ Name ›</td>
+<td style="text-align: left;">‹ Description of contribution ›</td>
+<td style="text-align: left;">‹ Amount ›</td>
+<td><div class="Comments">
+<p>‹ Standard / Redeemable ›</p>
+</div></td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">‹ Name ›</td>
+<td style="text-align: left;">‹ Description of contribution ›</td>
+<td style="text-align: left;">‹ Amount ›</td>
+<td><div class="Comments">
+<p>‹ Standard / Redeemable ›</p>
+</div></td>
+</tr>
+</tbody>
+</table>
+<p><u>Note:</u></p>
+<ul>
+<li>&quot;Standard&quot; refers to &quot;Credit (Standard)&quot; as defined in the FlexUp
+Charter-GC</li>
+<li>&quot;Redeemable&quot; refers to &quot;Credit (Redeemable Tokens)&quot; as defined in
+the FlexUp Charter-GC</li>
+</ul>
+<div id="appendix-3" class="Appendix-1">
+<p>Founders&#39; Representative Mandate</p>
+</div>
+<div class="Comments">
+<p>{ NOTE: This appendix is optional. Include it only if the Founders
+wish to grant the Founders&#39; Representative a formal power of attorney or
+mandate to act on their behalf beyond the default role described in the
+Founders-GC – for example, to co-sign the Grouping-SC or Incubation-SC
+on behalf of all Founders, or to sign other documents in connection with
+the implementation of the Intended Structure. Delete this appendix if no
+mandate is required. }</p>
+<p>{? NOTE: Describe the scope and limits of the mandate granted to the
+Founders&#39; Representative. ?}</p>
+</div>
+<p>The Founders grant the Founders&#39; Representative, {{
+founders.representative.name or &#39;‹ Full name ›&#39; }}, the authority
+to:</p>
+<p>‹ Describe scope of mandate – e.g.: &quot;sign the FlexUp Incubation
+Agreement on behalf of all Founders with ‹ Incubator name ›, on the
+terms of the draft appended hereto as Exhibit A&quot; ›</p>
+<p>This mandate:</p>
+<div class="Appendix-4">
+<p>is limited to the specific acts described above;</p>
+</div>
+<div class="Appendix-4">
+<p>does not authorise the Founders&#39; Representative to deviate from the
+agreed terms without the prior written consent of a Simple Majority of
+the Founders; and</p>
+</div>
+<div class="Appendix-4">
+<p>expires on ‹ date or event ›, or upon revocation by a Simple Majority
+of the Founders&#39; Assembly.</p>
+</div>
+</body>
+</html>

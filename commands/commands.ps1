@@ -40,6 +40,29 @@ function m2p {
   & (Join-Path $script:commandsRoot "m2p.ps1") $InputFile $OutputFile
 }
 
+function m2h {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory = $true, Position = 0)]
+    [string]$InputFile,
+
+    [Parameter(Position = 1)]
+    [string]$OutputFile
+  )
+
+  & (Join-Path $script:commandsRoot "m2h.ps1") $InputFile $OutputFile
+}
+
+function m2h-all {
+  [CmdletBinding()]
+  param(
+    [Parameter(Position = 0)]
+    [string]$TargetFolder
+  )
+
+  & (Join-Path $script:commandsRoot "m2h-all.ps1") $TargetFolder
+}
+
 function ld2d {
   [CmdletBinding()]
   param(
